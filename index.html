@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cronograma R1 Oftalmologia · Arthur 2026 · v43</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0d0f14;--surface:#13161e;--surface2:#1a1e2a;--border:#252938;--border2:#2e3349;--text:#e8eaf2;--muted:#6b7080;--accent:#009933;--accent2:#007a28;--done-bg:#111722;--dia:#a3e4a3;--nuc:#5bc4d8;--D:#a78bfa;--A:#4ade80;--M:#fbbf24;--B:#f87171;--T:#fb923c;--S:#f472b6;--festa:#ffb347;--radius:10px;--radius-lg:18px}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+  .header{background:linear-gradient(135deg,#0d0f14 0%,#161a2e 50%,#0d0f14 100%);border-bottom:1px solid var(--border);padding:32px 40px 24px;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
+  .header-inner{max-width:1100px;margin:0 auto}
+  .header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap}
+  .title-block h1{font-family:'DM Serif Display',serif;font-size:28px;letter-spacing:-.5px;color:#fff;line-height:1.2}
+  .title-block h1 span{color:var(--accent);font-style:italic}
+  .title-block p{color:var(--muted);font-size:12px;margin-top:4px;font-family:'DM Mono',monospace}
+  .global-progress{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;min-width:260px}
+  .gp-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+  .gp-numbers{display:flex;align-items:baseline;gap:6px;margin-bottom:8px}
+  .gp-n{font-size:26px;font-weight:600;color:#fff;font-family:'DM Mono',monospace}
+  .gp-total{font-size:13px;color:var(--muted)}
+  .gp-pct{font-size:13px;color:var(--accent);font-family:'DM Mono',monospace}
+  .progress-bar{height:4px;background:var(--border2);border-radius:99px;overflow:hidden}
+  .progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .6s ease}
+  .stats-row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center}
+  .stat-chip{background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:5px 14px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .stat-chip strong{color:var(--text)}
+  .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .dot-D{background:var(--D)}.dot-A{background:var(--A)}.dot-M{background:var(--M)}.dot-B{background:var(--B)}.dot-rev{background:var(--nuc)}.dot-T{background:var(--T)}.dot-S{background:var(--S)}
+  .filter-sep{color:var(--border2);font-size:18px}
+  .filter-btn{background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:5px 14px;font-size:12px;color:var(--muted);cursor:pointer;font-family:'Sora',sans-serif;transition:all .15s}
+  .filter-btn:hover{border-color:var(--accent);color:var(--text)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .main{max-width:1100px;margin:0 auto;padding:32px 40px 80px}
+  .semana{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);margin-bottom:20px;overflow:hidden;transition:border-color .2s;animation:fadeUp .35s ease both}
+  .semana:nth-child(1){animation-delay:.02s}.semana:nth-child(2){animation-delay:.04s}.semana:nth-child(3){animation-delay:.06s}.semana:nth-child(4){animation-delay:.08s}.semana:nth-child(5){animation-delay:.10s}.semana:nth-child(6){animation-delay:.12s}.semana:nth-child(7){animation-delay:.14s}.semana:nth-child(8){animation-delay:.16s}
+  .semana.all-done{border-color:#A8D4A8}
+  .semana.current-week{border-color:var(--accent);box-shadow:0 0 0 1px rgba(0,153,51,.25)}
+  .semana-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;cursor:pointer;user-select:none;gap:16px;flex-wrap:wrap}
+  .semana-header:hover{background:var(--surface2)}
+  .sem-left{display:flex;align-items:center;gap:14px}
+  .sem-badge{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;font-family:'DM Mono',monospace;flex-shrink:0}
+  .sem-title h3{font-size:15px;font-weight:600;color:#fff}
+  .sem-title p{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:1px}
+  .sem-right{display:flex;align-items:center;gap:16px}
+  .sem-progress-wrap{display:flex;align-items:center;gap:8px}
+  .sem-prog-bar{width:80px;height:3px;background:var(--border2);border-radius:99px;overflow:hidden}
+  .sem-prog-fill{height:100%;border-radius:99px;background:var(--accent);transition:width .4s}
+  .sem-prog-pct{font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;min-width:28px;text-align:right}
+  .sem-aulas-done{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
+  .sem-chevron{color:var(--muted);transition:transform .25s;font-size:16px}
+  .semana.open .sem-chevron{transform:rotate(180deg)}
+  .sem-aviso{background:#1e1a0e;border-top:1px solid #3a3010;padding:8px 24px;font-size:11px;color:#a89060;display:none}
+  .semana.open .sem-aviso{display:block}
+  .semana-body{display:none;padding:0 16px 16px}
+  .semana.open .semana-body{display:block}
+  .dia{border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);margin-top:10px;overflow:hidden}
+  .dia.plantao{border-color:#D4C8E8}
+  .dia.noturno{border-color:#C8D8E8}
+  .dia.pos-plantao{border-color:#E8D4D4}
+  .dia.simulado-day{border-color:#E8D0E8}
+  .dia.dia-done{border-color:#C8E0C8}
+  .dia.festa{border-color:#E8D4A0;background:linear-gradient(135deg,#1a1208 0%,#0d0f14 100%)}
+  .dia-header{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;cursor:pointer;gap:12px}
+  .dia-header:hover{background:var(--surface2)}
+  .dia.festa .dia-header:hover{background:rgba(255,179,71,.06)}
+  .dia-left{display:flex;align-items:center;gap:10px}
+  .dia-emoji{font-size:18px}
+  .dia-info h4{font-size:13px;font-weight:600;color:var(--dia)}
+  .dia.plantao .dia-info h4{color:#e87070}
+  .dia.noturno .dia-info h4{color:#7ab8e0}
+  .dia.pos-plantao .dia-info h4{color:#c8a080}
+  .dia.simulado-day .dia-info h4{color:var(--S)}
+  .dia.festa .dia-info h4{color:var(--festa);text-shadow:0 0 12px rgba(255,179,71,.3)}
+  .dia-info p{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
+  .dia.festa .dia-info p{color:#a07040}
+  .dia-right{display:flex;align-items:center;gap:10px}
+  .dia-count{font-size:11px;color:var(--muted)}
+  .dia-chevron{color:var(--muted);transition:transform .2s;font-size:14px}
+  .dia.open .dia-chevron{transform:rotate(180deg)}
+  .dia-body{display:none;padding:4px 12px 12px}
+  .dia.open .dia-body{display:block}
+  .item{display:flex;align-items:flex-start;gap:12px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background .15s;margin-top:4px;border:1px solid transparent}
+  .item:hover{background:var(--surface2)}
+  .item.done{background:var(--done-bg);border-color:#1e2530}
+  .item.done .item-name{text-decoration:line-through;color:var(--muted)}
+  .item.done .item-meta{opacity:.5}
+  .checkbox{width:18px;height:18px;border-radius:5px;border:2px solid var(--border2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s}
+  .item.done .checkbox{background:var(--accent);border-color:var(--accent)}
+  .checkbox svg{display:none}.item.done .checkbox svg{display:block}
+  .item-content{flex:1;min-width:0}
+  .item-name{font-size:13px;color:var(--text);line-height:1.4}
+  .item-meta{display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap}
+  .prio-tag{font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;font-family:'DM Mono',monospace;letter-spacing:.04em}
+  .prio-D{background:#0f3320;color:var(--D)}.prio-A{background:#1a3322;color:var(--A)}.prio-M{background:#3a2a0e;color:var(--M)}.prio-N{background:#0e2a30;color:var(--nuc)}
+  .item-time{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+  .item.revisao .checkbox{border-color:rgba(91,196,216,.4)}.item.revisao.done .checkbox{background:var(--nuc);border-color:var(--nuc)}.item.revisao .item-name{color:var(--nuc);font-weight:500}
+  .item.treino{display:none!important}
+  .item.treino_ .checkbox{border-color:rgba(251,146,60,.4)}.item.treino.done .checkbox{background:var(--T);border-color:var(--T)}.item.treino .item-name{color:var(--T);font-weight:500}
+  .item.simulado .checkbox{border-color:rgba(244,114,182,.4)}.item.simulado.done .checkbox{background:var(--S);border-color:var(--S)}.item.simulado .item-name{color:var(--S);font-weight:600}
+  .fab{position:fixed;bottom:28px;right:28px;background:var(--accent);border:none;border-radius:50px;padding:12px 20px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;z-index:200;font-family:'Sora',sans-serif;box-shadow:0 4px 24px rgba(0,153,51,.6);display:flex;align-items:center;gap:8px;transition:transform .15s,box-shadow .15s}
+  .fab:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,153,51,.8)}
+  @media(max-width:640px){.header{padding:20px 16px 16px}.main{padding:16px 12px 60px}.semana-header{padding:12px 16px}.header-top{flex-direction:column}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ── Mood Tracker ─────────────────────────────────────────────────────── */
+  .tracker-fab{position:fixed;bottom:28px;left:28px;background:var(--surface);border:1.5px solid var(--border);border-radius:50px;padding:11px 18px;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;z-index:200;font-family:'Sora',sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.4);display:flex;align-items:center;gap:8px;transition:all .15s}
+  .tracker-fab:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .tracker-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+  .tracker-overlay.open{display:flex}
+  .tracker-modal{background:var(--surface);border:1px solid var(--border);border-radius:24px 24px 0 0;width:100%;max-width:680px;padding:28px 28px 40px;display:flex;flex-direction:column;gap:20px;max-height:90vh;overflow-y:auto;animation:slideUp .25s ease}
+  @keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .tracker-header{display:flex;align-items:center;justify-content:space-between}
+  .tracker-header h2{font-family:'DM Serif Display',serif;font-size:20px;color:#fff}
+  .tracker-close{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--muted);cursor:pointer;font-size:13px}
+  .tracker-close:hover{border-color:var(--accent);color:var(--text)}
+  .tracker-date-nav{display:flex;align-items:center;gap:10px;justify-content:center}
+  .tracker-date-nav button{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--text);cursor:pointer;font-size:13px;font-family:'Sora',sans-serif}
+  .tracker-date-nav button:hover{border-color:var(--accent)}
+  .tracker-date-label{font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);min-width:120px;text-align:center}
+  .tracker-section{display:flex;flex-direction:column;gap:10px}
+  .tracker-section label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .mood-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .mood-btn{background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:12px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .15s;font-family:'Sora',sans-serif}
+  .mood-btn:hover{border-color:var(--accent);background:rgba(0,153,51,.08)}
+  .mood-btn.selected{border-color:var(--accent);background:rgba(0,153,51,.15)}
+  .mood-btn .mood-emoji{font-size:24px;line-height:1}
+  .mood-btn .mood-label{font-size:10px;color:var(--muted);text-align:center;line-height:1.2}
+  .mood-btn.selected .mood-label{color:var(--accent)}
+  .symptom-grid{display:flex;flex-wrap:wrap;gap:8px}
+  .sym-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:99px;padding:6px 14px;font-size:12px;color:var(--muted);cursor:pointer;transition:all .15s;font-family:'Sora',sans-serif}
+  .sym-btn:hover{border-color:#a78bfa;color:var(--text)}
+  .sym-btn.selected{border-color:#a78bfa;background:rgba(167,139,250,.12);color:#a78bfa}
+  .tracker-notes{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:13px;line-height:1.6;resize:vertical;min-height:72px;outline:none}
+  .tracker-notes:focus{border-color:var(--accent)}
+  .tracker-notes::placeholder{color:var(--muted)}
+  .tracker-energy{display:flex;gap:8px;align-items:center}
+  .energy-bar{display:flex;gap:4px;flex:1}
+  .energy-pip{flex:1;height:8px;border-radius:99px;background:var(--border);cursor:pointer;transition:background .15s}
+  .energy-pip.active{background:var(--accent)}
+  .med-section{background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+  .med-header{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#a78bfa}
+  .med-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .med-field{display:flex;flex-direction:column;gap:4px}
+  .med-field label{font-size:11px;color:var(--muted)}
+  .med-field input,.med-field select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;font-family:'Sora',sans-serif;outline:none}
+  .med-field input:focus,.med-field select:focus{border-color:#a78bfa}
+  .med-field select option{background:var(--surface)}
+  .tracker-save{background:var(--accent);border:none;border-radius:12px;padding:13px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:all .15s}
+  .tracker-save:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,153,51,.4)}
+  .tracker-history{display:flex;flex-direction:column;gap:0}
+  .hist-day{border-bottom:1px solid var(--border);padding:12px 0;display:flex;align-items:flex-start;gap:12px}
+  .hist-day:last-child{border-bottom:none}
+  .hist-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);min-width:52px;padding-top:2px}
+  .hist-mood-big{font-size:22px;line-height:1}
+  .hist-body{flex:1;display:flex;flex-direction:column;gap:3px}
+  .hist-chips{display:flex;flex-wrap:wrap;gap:4px}
+  .hist-chip{font-size:10px;background:rgba(167,139,250,.12);color:#a78bfa;border-radius:99px;padding:2px 8px}
+  .hist-note{font-size:12px;color:var(--muted);font-style:italic;margin-top:2px;line-height:1.4}
+  .hist-energy-dots{display:flex;gap:2px;align-items:center}
+  .hist-energy-dot{width:6px;height:6px;border-radius:50%;background:var(--border)}
+  .hist-energy-dot.on{background:var(--accent)}
+  .tab-bar{display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:3px}
+  .tab-btn{flex:1;padding:7px;border:none;background:none;border-radius:8px;color:var(--muted);cursor:pointer;font-size:12px;font-family:'Sora',sans-serif;font-weight:500;transition:all .15s}
+  .tab-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .chart-wrap{display:flex;flex-direction:column;gap:16px}
+  .chart-row{display:flex;align-items:center;gap:8px}
+  .chart-label{width:28px;text-align:center;font-size:14px}
+  .chart-bar-bg{flex:1;height:8px;background:var(--border);border-radius:99px;overflow:hidden}
+  .chart-bar-fill{height:100%;border-radius:99px;background:var(--accent);transition:width .4s}
+  .chart-count{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;min-width:20px}
+  .empty-state{text-align:center;padding:32px 0;color:var(--muted);font-size:13px}
+  .streak-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(0,153,51,.1);border:1px solid rgba(0,153,51,.25);border-radius:99px;padding:4px 12px;font-size:12px;color:var(--accent)}
+
+  /* ── Auth overlay ──────────────────────────────────────────────────────── */
+  #auth-overlay{position:fixed;inset:0;background:#0d0f14;z-index:1000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0}
+  .auth-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:18px}
+  .auth-logo{font-family:'DM Serif Display',serif;font-size:22px;color:#fff;text-align:center}.auth-logo span{color:var(--accent);font-style:italic}
+  .auth-sub{font-size:12px;color:var(--muted);text-align:center;margin-top:-10px}
+  .auth-field{display:flex;flex-direction:column;gap:6px}
+  .auth-field label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .auth-input{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;font-family:'Sora',sans-serif;outline:none;width:100%}
+  .auth-input:focus{border-color:var(--accent)}
+  .auth-btn{background:var(--accent);border:none;border-radius:10px;padding:13px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:all .15s;width:100%}
+  .auth-btn:hover{background:#007a28}
+  .auth-btn:disabled{opacity:.5;cursor:not-allowed}
+  .auth-msg{font-size:12px;text-align:center;color:var(--muted);min-height:16px}
+  .auth-msg.err{color:#f87171}.auth-msg.ok{color:var(--accent)}
+  #sync-bar{position:fixed;top:0;left:0;right:0;height:3px;background:var(--accent);z-index:999;transform:scaleX(0);transform-origin:left;transition:transform .4s;display:none}
+  #sync-status{position:fixed;top:8px;right:16px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;z-index:500;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:3px 10px;display:none}
+  #user-chip{position:fixed;top:8px;right:16px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;z-index:500;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:3px 10px;cursor:pointer;display:none}
+  #user-chip:hover{border-color:var(--accent)}
+
+</style>
+</head>
+<body>
+
+<div id="sync-bar"></div>
+<div id="sync-status"></div>
+<div id="user-chip" onclick="signOut()" title="Clique para sair">👤 <span id="user-email-chip"></span> · Sair</div>
+
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">Cronograma <span>R1 Oftalmologia</span></div>
+    <div class="auth-sub">Arthur · Extensivo 2026 · acesso sincronizado</div>
+    <div class="auth-field">
+      <label>E-mail</label>
+      <input class="auth-input" id="auth-email" type="email" placeholder="seu@email.com" autocomplete="email"/>
+    </div>
+    <div class="auth-field">
+      <label>Senha</label>
+      <input class="auth-input" id="auth-pass" type="password" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doSignIn()"/>
+    </div>
+    <button class="auth-btn" id="auth-btn" onclick="doSignIn()">Entrar</button>
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="title-block">
+        <h1>Cronograma <span>R1 Oftalmologia</span></h1>
+        <p>Arthur · Extensivo 2026 · 23/02 → 23/09/2026</p>
+      </div>
+      <div class="global-progress">
+        <div class="gp-label">Progresso Total</div>
+        <div class="gp-numbers">
+          <span class="gp-n" id="gp-done">0</span>
+          <span class="gp-total">/ 364</span>
+          <span class="gp-pct" id="gp-pct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="gp-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-chip"><span class="dot dot-D"></span>Diamante <strong id="cnt-D">0/112</strong></div>
+      <div class="stat-chip"><span class="dot dot-A"></span>Verde <strong id="cnt-A">0/171</strong></div>
+      <div class="stat-chip"><span class="dot dot-M"></span>Amarela <strong id="cnt-M">0/81</strong></div>
+      <div class="stat-chip"><span class="dot dot-rev"></span>Revisões <strong id="cnt-rev">0/206</strong></div>
+      <div class="stat-chip"><span class="dot dot-S"></span>Simulados <strong id="cnt-S">0/36</strong></div>
+      <span class="filter-sep">|</span>
+      <button class="filter-btn active" onclick="setFilter('all',event)">Todas</button>
+      <button class="filter-btn" onclick="setFilter('pending',event)">Pendentes</button>
+      <button class="filter-btn" onclick="setFilter('done',event)">Concluídas</button>
+    </div>
+  </div>
+</header>
+<main class="main" id="main"></main>
+<button class="fab" onclick="scrollToday()">📅 Semana atual</button>
+<script>
+let CRONOGRAMA=[{"num":1,"dias":[{"emoji":"🏃","nome":"SEGUNDA","data":"23/02","tempo":"5h25min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Indicadores de Saúde","tempo_video":36,"tempo_total":66,"prioridade":"D"},{"tipo":"aula","nome":"Nefrologia Pediátrica","tempo_video":35,"tempo_total":65,"prioridade":"D"},{"tipo":"aula","nome":"Testes Diagnósticos","tempo_video":36,"tempo_total":66,"prioridade":"D"},{"tipo":"aula","nome":"Sífilis","tempo_video":38,"tempo_total":68,"prioridade":"D"}]},{"emoji":"🏥","nome":"TERÇA","data":"24/02","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]},{"emoji":"📝","nome":"QUARTA","data":"25/02","tempo":"3h8min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Academia","emoji":"🏋️"},{"tipo":"aula","nome":"Corrimentos Vaginais","tempo_video":32,"tempo_total":62,"prioridade":"D"},{"tipo":"aula","nome":"Alergia Alimentar, Refluxo e Constipação","tempo_video":36,"tempo_total":66,"prioridade":"D"}]},{"emoji":"🏥","nome":"QUINTA","data":"26/02","tempo":"1h30min","plantao":false,"restrito":true,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"nome":"Anemias Hipoproliferativas I","prioridade":"D","tipo":"aula","bloco":"1","duracao":50}]},{"emoji":"🚴","nome":"SEXTA","data":"27/02","tempo":"5h19min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Redes de Atenção à Saúde","tempo_video":40,"tempo_total":70,"prioridade":"D"},{"tipo":"aula","nome":"Atenção Primária à Saúde","tempo_video":40,"tempo_total":70,"prioridade":"D"},{"tipo":"aula","nome":"Trauma Cranioencefálico","tempo_video":29,"tempo_total":59,"prioridade":"D"},{"nome":"Assistência ao Pré-Natal","prioridade":"D","tipo":"aula","bloco":"1","duracao":50}]},{"emoji":"🏥","nome":"SÁBADO","data":"28/02","tempo":"30min","plantao":false,"restrito":true,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"}]},{"emoji":"🏥","nome":"DOMINGO","data":"01/03","tempo":"12h","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]}]},{"num":2,"dias":[{"emoji":"🏃","nome":"SEGUNDA","data":"02/03","tempo":"5h10min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Diarreia Aguda","tempo_video":37,"tempo_total":67,"prioridade":"D"},{"tipo":"aula","nome":"Classificação dos Estudos Epidemiológicos","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Trauma: Encerramento","tempo_video":27,"tempo_total":57,"prioridade":"D"},{"tipo":"aula","nome":"Amenorreia Secundária","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"🏥","nome":"TERÇA","data":"03/03","tempo":"3h39min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"aula","nome":"Determinação Social do Processo Saúde-Doença","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Trauma Abdominal","tempo_video":29,"tempo_total":59,"prioridade":"D"},{"tipo":"aula","nome":"Gestação Ectópica","tempo_video":7,"tempo_total":37,"prioridade":"D"}]},{"emoji":"📝","nome":"QUARTA","data":"04/03","tempo":"4h3min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Academia","emoji":"🏋️"},{"tipo":"aula","nome":"Pneumonias — Pediatria","tempo_video":31,"tempo_total":61,"prioridade":"D"},{"tipo":"aula","nome":"Bronquiolite e Coqueluche","tempo_video":31,"tempo_total":61,"prioridade":"D"},{"tipo":"aula","nome":"Assistência ao Parto","tempo_video":31,"tempo_total":61,"prioridade":"D"}]},{"emoji":"🏃","nome":"QUINTA","data":"05/03","tempo":"4h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Estudos Longitudinais: Coorte e Caso-Controle","tempo_video":35,"tempo_total":65,"prioridade":"D"},{"tipo":"aula","nome":"Apendicite Aguda","tempo_video":28,"tempo_total":58,"prioridade":"D"},{"tipo":"aula","nome":"Antibióticos","tempo_video":39,"tempo_total":69,"prioridade":"D"}]},{"emoji":"🚴","nome":"SEXTA","data":"06/03","tempo":"1h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"}]},{"emoji":"📚","nome":"SÁBADO","data":"07/03","tempo":"3h43min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"},{"tipo":"aula","nome":"Abortamento","tempo_video":7,"tempo_total":37,"prioridade":"D"},{"tipo":"aula","nome":"Amenorreia Primária","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Anatomia Pélvica Feminina","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"📝","nome":"DOMINGO","data":"08/03","tempo":"4h","plantao":false,"restrito":false,"items":[{"tipo":"simulado","nome":"Simulado","emoji":"📝","tempo":240}]}]},{"num":3,"dias":[{"emoji":"🏃","nome":"SEGUNDA","data":"09/03","tempo":"4h10min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Dermatoses e Infecções de Partes Moles — Ped","tempo_video":12,"tempo_total":42,"prioridade":"D"},{"tipo":"aula","nome":"Legislação do SUS I: Leis Orgânicas da Saúde","tempo_video":19,"tempo_total":49,"prioridade":"D"},{"tipo":"aula","nome":"Diverticulite Aguda","tempo_video":6,"tempo_total":36,"prioridade":"D"},{"tipo":"aula","nome":"Cirrose Hepática I","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"🏥","nome":"TERÇA","data":"10/03","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]},{"emoji":"📝","nome":"QUARTA","data":"11/03","tempo":"3h6min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Academia","emoji":"🏋️"},{"tipo":"aula","nome":"Pneumonia Adquirida na Comunidade","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Descolamento Prematuro de Placenta","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"🏃","nome":"QUINTA","data":"12/03","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Anemia Ferropriva e Talassemia","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Abdome Agudo Obstrutivo","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"HAS: Ambulatorial e Emergências","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Síndromes Hipertensivas na Gestação","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"🚴","nome":"SEXTA","data":"13/03","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Sangramento Uterino Anormal","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"PALS — Suporte Avançado de Vida em Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Anatomia da Parede Abdominal e Hérnia Inguinal","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Trauma de Tórax","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"📚","nome":"SÁBADO","data":"14/03","tempo":"5h9min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"},{"tipo":"aula","nome":"Aleitamento Materno","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Urgências da Vesícula Biliar","tempo_video":30,"tempo_total":60,"prioridade":"D"},{"tipo":"aula","nome":"Avaliação Global do Hemograma","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Anemias Hipoproliferativas II","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"🏥","nome":"DOMINGO","data":"15/03","tempo":"12h","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]}]},{"num":4,"dias":[{"emoji":"🏃","nome":"SEGUNDA","data":"16/03","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Diabetes: Tratamento","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Diabetes na Gestação","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Doenças Exantemáticas","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Câncer de Estômago — Bloco 11","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"🏥","nome":"TERÇA","data":"17/03","tempo":"5h20min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"aula","nome":"Ensaios Clínicos","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Urgências Endoscópicas","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Níveis de Prevenção","tempo_video":36,"tempo_total":66,"prioridade":"A"},{"tipo":"aula","nome":"Úlcera Péptica, H. pylori e Dispepsia Funcional","tempo_video":38,"tempo_total":68,"prioridade":"A"}]},{"emoji":"📝","nome":"QUARTA","data":"18/03","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]},{"emoji":"🏃","nome":"QUINTA","data":"19/03","tempo":"4h8min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Modificações do Organismo Materno","tempo_video":32,"tempo_total":62,"prioridade":"A"},{"tipo":"aula","nome":"Desenvolvimento Infantil","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"TEA e TDAH — Alterações no Neurodesenvolvimento","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"🚴","nome":"SEXTA","data":"20/03","tempo":"4h4min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Trauma: Vias Aéreas","tempo_video":30,"tempo_total":60,"prioridade":"A"},{"tipo":"aula","nome":"Choque e Ressuscitação Hemostática","tempo_video":30,"tempo_total":60,"prioridade":"A"},{"tipo":"aula","nome":"Neurovascular II: HSA e AVCh","tempo_video":34,"tempo_total":64,"prioridade":"A"}]},{"emoji":"📚","nome":"SÁBADO","data":"21/03","tempo":"2h8min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"},{"tipo":"aula","nome":"Dispepsia e DRGE","tempo_video":38,"tempo_total":68,"prioridade":"A"}]},{"emoji":"📝","nome":"DOMINGO","data":"22/03","tempo":"4h","plantao":false,"restrito":false,"items":[{"tipo":"simulado","nome":"Simulado","emoji":"📝","tempo":240}]}]},{"num":5,"dias":[{"emoji":"🏃","nome":"SEGUNDA","data":"23/03","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Dislipidemias","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Incontinência Urinária","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Peçonhentos, Raiva e Tétano","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Revisão Sistemática e Metanálise","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"🏥","nome":"TERÇA","data":"24/03","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]},{"emoji":"📝","nome":"QUARTA","data":"25/03","tempo":"3h5min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Academia","emoji":"🏋️"},{"tipo":"aula","nome":"Pré-Operatório","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Doença Inflamatória Pélvica Aguda","tempo_video":32,"tempo_total":62,"prioridade":"A"}]},{"emoji":"🏃","nome":"QUINTA","data":"26/03","tempo":"5h6min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Úlceras Genitais","tempo_video":32,"tempo_total":62,"prioridade":"A"},{"tipo":"aula","nome":"Violência Contra a Criança e o Adolescente","tempo_video":36,"tempo_total":66,"prioridade":"A"},{"tipo":"aula","nome":"Introdução às Artrites e Artrite Reumatoide","tempo_video":29,"tempo_total":59,"prioridade":"A"},{"tipo":"aula","nome":"Espondiloartrites","tempo_video":29,"tempo_total":59,"prioridade":"A"}]},{"emoji":"🚴","nome":"SEXTA","data":"27/03","tempo":"4h5min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Introdução ao Trauma e Atendimento Inicial","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Puberdade","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Trauma de Pelve","tempo_video":29,"tempo_total":59,"prioridade":"A"}]},{"emoji":"📚","nome":"SÁBADO","data":"28/03","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"},{"tipo":"aula","nome":"Dor Torácica Coronariana","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Neurovascular I: AIT e AVCi","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Fisiologia Menstrual","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Associação x Causalidade","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"🏥","nome":"DOMINGO","data":"29/03","tempo":"12h","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]}]},{"num":6,"dias":[{"emoji":"🏃","nome":"SEGUNDA","data":"30/03","tempo":"4h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Tuberculose: Clínica e Diagnóstico","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Convulsão na Emergência e Convulsão Febril","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Infecções Congênitas","tempo_video":36,"tempo_total":66,"prioridade":"D"}]},{"emoji":"🏥","nome":"TERÇA","data":"31/03","tempo":"4h31min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"aula","nome":"Crescimento e Baixa Estatura","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Infecções e Gravidez","tempo_video":32,"tempo_total":62,"prioridade":"D"},{"tipo":"aula","nome":"História e Princípios do SUS","tempo_video":56,"tempo_total":86,"prioridade":"D"}]},{"emoji":"🎉","nome":"QUARTA","data":"01/04","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}],"evento":"Despedida Solteiro Formiga"},{"emoji":"🎉","nome":"QUINTA","data":"02/04","tempo":"1h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"}],"evento":"Despedida Solteiro Formiga"},{"emoji":"🎉","nome":"SEXTA","data":"03/04","tempo":"1h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"}],"evento":"Despedida Solteiro Formiga"},{"emoji":"🎉","nome":"SÁBADO","data":"04/04","tempo":"1h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"}],"evento":"Despedida Solteiro Formiga"},{"emoji":"🎉","nome":"DOMINGO","data":"05/04","tempo":"0min","plantao":false,"restrito":false,"items":[],"evento":"Despedida Solteiro Formiga"}]},{"num":7,"dias":[{"emoji":"🏃","nome":"SEGUNDA","data":"06/04","tempo":"1h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"}]},{"emoji":"🏥","nome":"TERÇA","data":"07/04","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]},{"emoji":"📝","nome":"QUARTA","data":"08/04","tempo":"3h6min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"aula","nome":"Meningite e Encefalite — Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Financiamento da APS","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"🏃","nome":"QUINTA","data":"09/04","tempo":"5h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Queimaduras — Cirurgia","tempo_video":27,"tempo_total":57,"prioridade":"A"},{"tipo":"aula","nome":"Rastreamentos","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Gasometria Arterial","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Escroto Agudo","tempo_video":27,"tempo_total":57,"prioridade":"A"}]},{"emoji":"🚴","nome":"SEXTA","data":"10/04","tempo":"5h10min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"aula","nome":"Distúrbios do Sódio","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Síndrome dos Ovários Policísticos","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Distúrbios do Potássio","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Sofrimento Fetal Agudo","tempo_video":31,"tempo_total":61,"prioridade":"A"}]},{"emoji":"📚","nome":"SÁBADO","data":"11/04","tempo":"5h6min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"},{"nome":"Hiperplasia Prostática Benigna","prioridade":"A","tipo":"aula","bloco":"13","duracao":50},{"tipo":"aula","nome":"IVAS — Infecções de Vias Aéreas Superiores","tempo_video":31,"tempo_total":61,"prioridade":"A"},{"tipo":"aula","nome":"Estudos Transversais","tempo_video":35,"tempo_total":65,"prioridade":"A"},{"nome":"Cirurgia Geral: Respiro e Próximos Passos","prioridade":"A","tipo":"aula","bloco":"13","duracao":50}]},{"emoji":"🏥","nome":"DOMINGO","data":"12/04","tempo":"12h","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]}]},{"num":8,"dias":[{"emoji":"🏃","nome":"SEGUNDA","data":"13/04","tempo":"5h7min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Vacinação — Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Propedêutica Mamária","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Ortopedia Pediátrica","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Abdome Agudo: Introdução","tempo_video":28,"tempo_total":58,"prioridade":"A"}]},{"emoji":"🏥","nome":"TERÇA","data":"14/04","tempo":"4h54min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"aula","nome":"Ferramentas da APS/ESF","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Fígado para Perdidos","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Reanimação Neonatal","tempo_video":36,"tempo_total":66,"prioridade":"A"},{"tipo":"aula","nome":"Dermatite Atópica e Lesões Benignas do RN","tempo_video":12,"tempo_total":42,"prioridade":"A"}]},{"emoji":"📝","nome":"QUARTA","data":"15/04","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]},{"emoji":"🏃","nome":"QUINTA","data":"16/04","tempo":"5h16min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"REMIT e Pós-Operatório","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Rotura Prematura de Membranas Ovulares","tempo_video":32,"tempo_total":62,"prioridade":"A"},{"tipo":"aula","nome":"Anemias Hemolíticas","tempo_video":39,"tempo_total":69,"prioridade":"A"},{"tipo":"aula","nome":"Violência Sexual","tempo_video":32,"tempo_total":62,"prioridade":"A"}]},{"emoji":"🚴","nome":"SEXTA","data":"17/04","tempo":"3h47min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"aula","nome":"Icterícia e Colestase Neonatal","tempo_video":36,"tempo_total":66,"prioridade":"A"},{"tipo":"aula","nome":"Câncer de Esôfago","tempo_video":30,"tempo_total":60,"prioridade":"A"},{"tipo":"aula","nome":"Cefaleias","tempo_video":11,"tempo_total":41,"prioridade":"A"}]},{"emoji":"📚","nome":"SÁBADO","data":"18/04","tempo":"3h47min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"},{"tipo":"aula","nome":"Avaliação de Vitalidade Fetal","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Estratégia da Saúde da Família","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Avaliação Geriátrica Ampla","tempo_video":11,"tempo_total":41,"prioridade":"A"}]},{"emoji":"📝","nome":"DOMINGO","data":"19/04","tempo":"4h","plantao":false,"restrito":false,"items":[{"tipo":"simulado","nome":"Simulado","emoji":"📝","tempo":240}]}]},{"num":9,"dias":[{"emoji":"🏃","nome":"SEGUNDA","data":"20/04","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Litíase Renal: PS e Tratamento Cirúrgico","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Trabalho de Parto Prematuro","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Método Clínico Centrado na Pessoa","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Tabagismo","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"🏃","nome":"TERÇA","data":"21/04","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]},{"emoji":"📝","nome":"QUARTA","data":"22/04","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"},{"tipo":"aula","nome":"Injúria Renal — CM","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Legislação do SUS II: NOBs, NOAS e Pacto","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"🏃","nome":"QUINTA","data":"23/04","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Telessaúde e Publicidade Médica","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"📝","nome":"SEXTA","data":"24/04","tempo":"5h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"simulado","nome":"Simulado","emoji":"📝","tempo":240}]},{"emoji":"📚","nome":"SÁBADO","data":"25/04","tempo":"3h6min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"},{"tipo":"aula","nome":"Taquiarritmias — Cardiologia","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Cirrose Hepática II","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"🏥","nome":"DOMINGO","data":"26/04","tempo":"12h","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]}]},{"num":10,"dias":[{"emoji":"🏃","nome":"SEGUNDA","data":"27/04","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Asma — Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Vigilância em Saúde","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Lúpus Eritematoso Sistêmico","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Hemorragia Pós-Parto","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"🏃","nome":"TERÇA","data":"28/04","tempo":"5h12min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Intoxicações Exógenas","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Placenta Prévia","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Derrame Pleural","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Anemia Falciforme","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"📝","nome":"QUARTA","data":"29/04","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]},{"emoji":"🏃","nome":"QUINTA","data":"30/04","tempo":"4h9min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Câncer de Estômago — Bloco 9","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Insuficiência Cardíaca","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Legislação do SUS 3: Decreto 7508/11","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"📝","nome":"SEXTA","data":"01/05","tempo":"5h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"simulado","nome":"Simulado","emoji":"📝","tempo":240}]},{"emoji":"📚","nome":"SÁBADO","data":"02/05","tempo":"2h3min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"},{"tipo":"aula","nome":"Espirometria e Asma","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Hemostasia e Distúrbios Hemorrágicos — Ped","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"📝","nome":"DOMINGO","data":"03/05","tempo":"4h","plantao":false,"restrito":false,"items":[{"tipo":"simulado","nome":"Simulado","emoji":"📝","tempo":240}]}]},{"num":11,"dias":[{"emoji":"📋","nome":"SEGUNDA","data":"04/05","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"}],"evento":"Correção Simulado"},{"emoji":"🏥","nome":"TERÇA","data":"05/05","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}],"aviso":"Plantão 24h (07h→07h qua)"},{"emoji":"📝","nome":"QUARTA","data":"06/05","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"},{"tipo":"aula","nome":"Assistência ao Pré-Natal na APS","tempo_video":36,"tempo_total":66,"prioridade":"M"},{"tipo":"aula","nome":"Intoxicações, PAIRO e Burnout","tempo_video":33,"tempo_total":63,"prioridade":"M"}]},{"emoji":"🏃","nome":"QUINTA","data":"07/05","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Fisiologia da Tireoide e Hipotireoidismo","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Desconforto Respiratório Neonatal","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Câncer de Colo de Útero: Diagnóstico e Tratamento","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Síndrome de Fournier","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"📝","nome":"SEXTA","data":"08/05","tempo":"5h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"simulado","nome":"Simulado","emoji":"📝","tempo":240}]},{"emoji":"📚","nome":"SÁBADO","data":"09/05","tempo":"3h6min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"},{"tipo":"aula","nome":"Tromboembolismo Pulmonar","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Câncer de Mama: Fatores de Risco e CDIS","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"🏥","nome":"DOMINGO","data":"10/05","tempo":"12h","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]}]},{"num":12,"dias":[{"emoji":"🏃","nome":"SEGUNDA","data":"11/05","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Neoplasias Pediátricas","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Cirurgia: Resumão / Encerramento","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Síndrome Climatérica","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Terapia Hormonal","tempo_video":33,"tempo_total":63,"prioridade":"D"}],"evento":""},{"emoji":"🏃","nome":"TERÇA","data":"12/05","tempo":"5h12min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Infecção do Trato Urinário — CM","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Tuberculose e Hanseníase na APS","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Insuficiência Cognitiva: Demências","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Hiperplasia Endometrial","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"📝","nome":"QUARTA","data":"13/05","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]},{"emoji":"🏃","nome":"QUINTA","data":"14/05","tempo":"4h9min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Cirurgia Pediátrica no PS","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Ética em Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Arboviroses — CM","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Hepatites Virais","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"📝","nome":"SEXTA","data":"15/05","tempo":"5h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"simulado","nome":"Simulado","emoji":"📝","tempo":240}]},{"emoji":"🎉","nome":"SÁBADO","data":"16/05","tempo":"1h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"}],"evento":"Noivado Bella e Rohlfs"},{"emoji":"📝","nome":"DOMINGO","data":"17/05","tempo":"4h","plantao":false,"restrito":false,"items":[{"tipo":"simulado","nome":"Simulado","emoji":"📝"}]}]},{"num":13,"dias":[{"emoji":"📋","nome":"SEGUNDA","data":"18/05","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"}],"evento":"Correção Simulado"},{"emoji":"🏥","nome":"TERÇA","data":"19/05","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}],"aviso":"Plantão 24h (07h→07h qua)"},{"emoji":"📝","nome":"QUARTA","data":"20/05","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"},{"tipo":"aula","nome":"Acidente de Trabalho","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Declaração de Óbito, Atestados e Laudos","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"emoji":"🏃","nome":"QUINTA","data":"21/05","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Anticoncepção","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Kawasaki, Vasculite por IgA e Febre Reumática","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"DPOC","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Pancreatite Aguda","tempo_video":6,"tempo_total":36,"prioridade":"A"}]},{"emoji":"📝","nome":"SEXTA","data":"22/05","tempo":"5h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"simulado","nome":"Simulado","emoji":"📝","tempo":240}]},{"emoji":"📚","nome":"SÁBADO","data":"23/05","tempo":"1h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"},{"tipo":"aula","nome":"Infertilidade","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Arboviroses — Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"🏥","nome":"DOMINGO","data":"24/05","tempo":"12h","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]}]},{"num":14,"dias":[{"emoji":"🏃","nome":"SEGUNDA","data":"25/05","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Endometriose","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Cetoacidose Diabética — Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Triagens Neonatais","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Cirurgia Bariátrica","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"evento":""},{"emoji":"🏃","nome":"TERÇA","data":"26/05","tempo":"5h12min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"aula","nome":"Tuberculose: Tratamento","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Emergências Hiperglicêmicas — CAD e EHH","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Restrição de Crescimento Intrauterino","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"BLS e ACLS","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"📝","nome":"QUARTA","data":"27/05","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}]},{"emoji":"🏃","nome":"QUINTA","data":"28/05","tempo":"4h9min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"},{"tipo":"aula","nome":"Meningites e Encefalites — CM","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Perioperatório: Complicações Gerais","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Bradiarritmias","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Síncope","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"📝","nome":"SEXTA","data":"29/05","tempo":"5h","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Bike","emoji":"🚴"},{"tipo":"simulado","nome":"Simulado","emoji":"📝","tempo":240}]},{"emoji":"📚","nome":"SÁBADO","data":"30/05","tempo":"2h3min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Longo","emoji":"🏃"},{"tipo":"aula","nome":"Artrite Idiopática Juvenil","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Prolapso Genital","tempo_video":33,"tempo_total":63,"prioridade":"A"}]},{"emoji":"📝","nome":"DOMINGO","data":"31/05","tempo":"4h","plantao":false,"restrito":false,"items":[{"tipo":"simulado","nome":"Simulado","emoji":"📝"}]}]},{"num":15,"dias":[{"emoji":"📋","nome":"SEGUNDA","data":"01/06","tempo":"5h12min","plantao":false,"restrito":false,"items":[{"tipo":"revisao","qtd":15,"tempo":25,"nome":"Rev 15q"},{"tipo":"treino","nome":"Corrida","emoji":"🏃"},{"tipo":"treino","nome":"Fortalecimento","emoji":"💪"}],"evento":"Correção Simulado"},{"emoji":"🏥","nome":"TERÇA","data":"02/06","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"}],"aviso":"Plantão 24h (07h→07h qua)"},{"emoji":"📝","nome":"QUARTA","data":"03/06","tempo":"30min","plantao":true,"restrito":false,"items":[{"tipo":"revisao","qtd":5,"tempo":10,"nome":"Rev 5q"},{"tipo":"aula","nome":"Atenção à Saúde de Populações Específicas","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Ética Médica","tempo_video":33,"tempo_total":63,"prioridade":"D"}]},{"data":"04/06","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Câncer de Colo de Útero: Rastreamento","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Câncer de Mama: Rastreamento","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"ITU — CM","tempo_video":33,"tempo_total":63,"prioridade":"D"},{"tipo":"aula","nome":"Cirurgia: Resumão/Encerramento","tempo_video":33,"tempo_total":63,"prioridade":"D"}],"cap":4},{"data":"05/06","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"06/06","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Malformações Mullerianas","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Febre sem Sinais Localizatórios","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Trauma: Populações especiais","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Embriologia do Sistema Genital Feminino","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"07/06","nome":"DOMINGO","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0}]},{"num":16,"tipo":"B","dias":[{"data":"08/06","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25}],"cap":0},{"data":"09/06","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Miscelânea em Nefropediatria","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Trauma: Medidas Auxiliares, FAST e demais avaliações","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Trauma Urológico","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Artrites Microcristalinas (Gota e CPPD)","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"10/06","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"11/06","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Fibromialgia","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Desnutrição e Vitaminas","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Trauma Musculoesquelético","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Trauma de Pescoço","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"12/06","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"13/06","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Dor Torácica Não Coronariana","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Traumatismo Cranioencefálico e Hipertensão Intracraniana — Ped","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Esteroidogênese","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Politrauma, Afogamento — Ped","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"14/06","nome":"DOMINGO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0}]},{"num":17,"tipo":"A","dias":[{"data":"15/06","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Cicatrização e Lesões por Pressão","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Hiperprolactinemia","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"COVID — Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Fios de Sutura","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"16/06","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"17/06","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Oncologia: Emergências e Cuidados Paliativos","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Ética em Pesquisa Clínica","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":2},{"data":"18/06","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Grandes Síndromes Geriátricas","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Doença Trofoblástica Gestacional","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Disfagia e Acalasia","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Doenças Hepáticas: CBP, CEP, HAI e Doença de Wilson","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"19/06","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"20/06","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Hérnias de Hiato","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Coagulação e Hemostasia","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Outros Sangramentos 2ª Metade da Gestação","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Abdome Agudo Perfurativo, Vascular e Hemorrágico","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"21/06","nome":"DOMINGO","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0}]},{"num":18,"tipo":"B","dias":[{"data":"22/06","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25}],"cap":0},{"data":"23/06","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Outras Neoplasias Gástricas","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Medidas de Associação — Exercícios","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"HAS — Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Hernioplastia Inguinal","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"24/06","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"25/06","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Gemelaridade","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Diabetes no SUS","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Enxertos e Retalhos","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Financiamento do SUS e Planejamento em Saúde","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"26/06","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"27/06","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Outras Hérnias — Cirurgia","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Diabetes: Classificação, Diagnóstico e Metas","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Hérnias Incisionais e Fechamento de Parede","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Síndrome Metabólica e Obesidade","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"28/06","nome":"DOMINGO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0}]},{"num":19,"tipo":"A","dias":[{"data":"29/06","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Ingestão de Corpo Estranho e BRUE","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Medicina Baseada em Evidências","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Uro-Oncologia","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Distúrbios Metabólicos Neonatais","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"30/06","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"01/07","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Propedêutica em Uroginecologia","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Significância Estatística: Valor-p e IC","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":2},{"data":"02/07","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Vasculites","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Cardiologia na APS","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Tuberculose — Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Doenças Valvares","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"03/07","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"04/07","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Cardiopatias na Gravidez","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Síndrome Depressiva","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Câncer Colorretal e Síndromes Associadas","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Síndrome Maníaca","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"05/07","nome":"DOMINGO","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0}]},{"num":20,"tipo":"B","dias":[{"data":"06/07","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25}],"cap":0},{"data":"07/07","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Doenças Orificiais e CEC de Canal Anal","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Infecções Nosocomiais","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Choque","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Vacinação — CM","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"08/07","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"09/07","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Principais Sintomas em Mastologia","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Osteomielite e Artrite Séptica","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Nódulos Hepáticos Benignos","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Via Aérea, Intubação e VNI","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"10/07","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"11/07","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"SDRA — Síndrome do Desconforto Respiratório Agudo","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Drogas Vasoativas e Sedoanalgesia","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Classificação das Lesões Benignas — Mastologia","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"HIV — Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"12/07","nome":"DOMINGO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0}]},{"num":21,"tipo":"A","dias":[{"data":"13/07","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Ferimento Descolante","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Pediatria Geral","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Diarreia Aguda e Colite Pseudomembranosa","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Diarreias Crônicas — CM","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"14/07","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"15/07","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Colo Curto e Incompetência Istmocervical","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Hipotireoidismo — Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":2},{"data":"16/07","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Carcinoma Hepatocelular","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Doença Inflamatória Intestinal — DII","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Hiperplasia Adrenal Congênita — HAC","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Nutrologia em Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"17/07","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"18/07","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Aneurisma de Aorta","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Osteoporose","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Glomerulopatias","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Puerpério","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"19/07","nome":"DOMINGO","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0}]},{"num":22,"tipo":"B","dias":[{"data":"20/07","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25}],"cap":0},{"data":"21/07","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Fibrose Cística e Diferenciais","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Registro de Saúde Orientado por Problemas","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Adenocarcinoma de Pâncreas e Tumores Periampulares","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Esclerose Sistêmica","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"22/07","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"23/07","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Miopatias Autoimunes Sistêmicas","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Imunodeficiências para o Pediatra","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Metástases Hepáticas de Câncer Colorretal","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"HIV e Doenças Oportunistas","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"24/07","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"25/07","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Hipertireoidismo e Tireoidite","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Doenças da Vulva e da Vagina","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Outras Doenças Neonatais","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Trombose Venosa Profunda","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"26/07","nome":"DOMINGO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0}]},{"num":23,"tipo":"A","dias":[{"data":"27/07","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Esclerose Múltipla e Neuromielite Óptica","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Sepse Neonatal","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Cirurgia Torácica: Pneumotórax","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Doença Pulmonar Intersticial (DPI)","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"28/07","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"29/07","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Adrenal — CM","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Síndrome de Cushing","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":2},{"data":"30/07","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Câncer de Mama: Doença Invasiva","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Parasitoses Intestinais","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Síndrome Psicótica","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Oncocirurgia Geral","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"31/07","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"01/08","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Outro Distúrbios Hidroeletrolíticos — Ca, P, Mg","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Câncer de Ovário","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"ITU — Pediatria","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Sepse Pediátrica","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"02/08","nome":"DOMINGO","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0}]},{"num":24,"tipo":"B","dias":[{"data":"03/08","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25}],"cap":0},{"data":"04/08","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Pneumoconioses","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Trauma Vascular","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Câncer de Pulmão","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Doença Renal Crônica — CM","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"05/08","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"06/08","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Tumores Anexiais","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Choque e Drogas Vasoativas — Ped","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Neoplasias Císticas Pancreáticas","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Pancreatite Crônica","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"07/08","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"08/08","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Eletrocirurgia","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Depressão e Delirium no Idoso","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Câncer de Endométrio","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Malformações Congênitas","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"09/08","nome":"DOMINGO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0}]},{"num":25,"tipo":"A","dias":[{"data":"10/08","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Pâncreas e VB: Tumores Neuroendócrinos","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Nutrição Perioperatória","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Outras Intercorrências Clínicas na Gestação","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Uropediatria e Hérnias","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"11/08","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"12/08","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Videolaparoscopia","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Insuficiência Venosa Crônica","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":2},{"data":"13/08","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Cirurgia Vascular: Síndromes Compressivas","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Doenças Virais e Pandêmicas","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Técnicas de Reprodução Assistida","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Medicina do Adolescente","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"14/08","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"15/08","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Dermatologia na APS","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Icterícias Febris e Febre Maculosa","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Cuidado à Saúde LGBTQIAPN+","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Tumores do Intestino Delgado","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"16/08","nome":"DOMINGO","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0}]},{"num":26,"tipo":"B","dias":[{"data":"17/08","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25}],"cap":0},{"data":"18/08","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Doenças Traqueais","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Doenças Cirúrgicas do Baço","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"CEC de Cabeça e Pescoço","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Feocromocitoma","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"19/08","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"20/08","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Prolactinomas","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Oncohematologia","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Cirurgia Ginecológica: Princípios e Complicações","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Epilepsias na Infância","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"21/08","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"22/08","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Cisto Pilonidal","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Dermatologia — CM","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Medicina Fetal","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Otites, Perda Auditiva, Rinossinusites e Epistaxe — Ped","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"23/08","nome":"DOMINGO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0}]},{"num":27,"tipo":"A","dias":[{"data":"24/08","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Cabeça e Pescoço: Tireoide","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Oftalmopediatria","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Anestesiologia","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Oftalmologia para o Generalista — Parte II","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":4},{"data":"25/08","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"26/08","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Outras Urgências Ginecológicas","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Doenças Neuromusculares na Infância","tempo_video":33,"tempo_total":63,"prioridade":"A"}],"cap":2},{"data":"27/08","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Cirurgia Cardíaca","tempo_video":33,"tempo_total":63,"prioridade":"A"},{"tipo":"aula","nome":"Fraturas de Face","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Saúde Socioecológica","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Rinologia","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"28/08","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"29/08","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Otologia I","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Otologia II","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Malformações do Sistema Nervoso","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Bucofaringolaringologia I","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"30/08","nome":"DOMINGO","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0}]},{"num":28,"tipo":"B","dias":[{"data":"31/08","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25}],"cap":0},{"data":"01/09","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Trombofilias na Gestação e Puerpério","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Neurocirurgia","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Rinites e Afecções da Laringe e Faringe — Ped","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Transtornos Psiquiátricos na Gestação e Pós-parto","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"02/09","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"03/09","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Psiquiatria da Infância e Adolescência","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Mediastino","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Hiperaldosteronismo Primário","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Anomalias Congênitas em Cabeça e Pescoço","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"04/09","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"05/09","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Emergências Psiquiátricas","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Hemoterapia","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Hiperglicemia Hospitalar","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Genética","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"06/09","nome":"DOMINGO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0}]},{"num":29,"tipo":"A","dias":[{"data":"07/09","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Ultrassonografia em Obstetrícia","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Alimentação Infantil","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Diarreia Crônica e Doenças Funcionais","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Obesidade e Síndrome Metabólica — Ped","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"08/09","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"09/09","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10},{"tipo":"aula","nome":"Distúrbios do Sono","tempo_video":33,"tempo_total":63,"prioridade":"M"},{"tipo":"aula","nome":"Disfagia, Esofagite Eosinofílica e Acalasias — CM","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":2},{"data":"10/09","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"aula","nome":"Isquemia de Membros Inferiores","tempo_video":33,"tempo_total":63,"prioridade":"M"}],"cap":4},{"data":"11/09","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"12/09","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25}],"cap":4},{"data":"13/09","nome":"DOMINGO","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0}]},{"num":30,"tipo":"B","dias":[{"data":"14/09","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25}],"cap":0},{"data":"15/09","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":4},{"data":"16/09","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"17/09","nome":"QUINTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25}],"cap":4},{"data":"18/09","nome":"SEXTA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0},{"data":"19/09","nome":"SÁBADO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25}],"cap":4},{"data":"20/09","nome":"DOMINGO","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25},{"tipo":"simulado","nome":"Simulado","tempo_video":0,"tempo_total":240,"prioridade":""}],"cap":0}]},{"num":31,"tipo":"A","dias":[{"data":"21/09","nome":"SEGUNDA","plantao":false,"items":[{"tipo":"revisao","nome":"Rev 15q","tempo_video":0,"tempo_total":45,"prioridade":"","qtd":15,"tempo":25}],"cap":4},{"data":"22/09","nome":"TERÇA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":0},{"data":"23/09","nome":"QUARTA","plantao":true,"items":[{"tipo":"revisao","nome":"Rev 5q","tempo_video":0,"tempo_total":20,"prioridade":"","qtd":5,"tempo":10}],"cap":2}]}];
+const TOTAL_DAM=364;
+const SEXTA_NOTURNO=new Set([]);
+const SABADO_POS=new Set([]);
+const KEY='cronograma_arthur_2026';
+const CRONO_KEY='cronograma_arthur_2026_crono_v43';
+function saveCrono(){try{localStorage.setItem(CRONO_KEY,JSON.stringify(CRONOGRAMA));}catch(e){console.warn('saveCrono failed',e);}}
+function loadCrono(){try{const saved=localStorage.getItem(CRONO_KEY);if(saved){const c=JSON.parse(saved);if(c&&c.length===CRONOGRAMA.length){c.forEach((s,i)=>{CRONOGRAMA[i].dias=s.dias;});}}  }catch(e){console.warn('loadCrono failed',e);}}
+function loadState(){try{const saved=JSON.parse(localStorage.getItem(KEY));if(saved&&Object.keys(saved).length>0)return saved;return {"s1_d0_i0": true, "s1_d0_i1": true, "s1_d0_i2": true, "s1_d0_i3": true, "s1_d0_i4": true, "s1_d0_i5": true, "s1_d1_i0": true, "s1_d2_i0": true, "s1_d2_i1": true, "s1_d2_i2": true, "s1_d2_i3": true, "s1_d3_i0": true, "s1_d4_i0": true, "s1_d4_i1": true, "s1_d4_i2": true, "s1_d4_i3": true, "s1_d4_i4": true, "s1_d4_i5": true, "s1_d5_i0": true, "s1_d6_i0": true, "s2_d0_i0": true, "s2_d0_i1": true, "s2_d0_i2": true, "s2_d0_i3": true, "s2_d0_i4": true, "s2_d0_i5": true, "s2_d1_i0": true, "s2_d1_i1": true, "s2_d1_i2": true, "s2_d1_i3": true, "s2_d2_i0": true, "s2_d2_i1": true, "s2_d2_i2": true, "s2_d2_i3": true, "s2_d2_i4": true, "s2_d3_i0": true, "s2_d3_i1": true, "s2_d3_i2": true, "s2_d3_i3": true, "s2_d3_i4": true, "s2_d4_i0": true, "s2_d4_i1": true, "s2_d5_i0": true, "s2_d5_i1": true, "s2_d5_i2": true, "s2_d5_i3": true, "s2_d5_i4": true, "s3_d0_i2": true, "s3_d0_i3": true, "s3_d0_i4": true, "s3_d0_i5": true, "s3_d2_i2": true, "s3_d2_i3": true, "s3_d3_i2": true, "s3_d3_i3": true, "s3_d3_i4": true, "s3_d3_i5": true, "s3_d4_i3": true, "s3_d4_i4": true, "s3_d4_i5": true, "s3_d4_i6": true, "s3_d5_i2": true, "s3_d5_i3": true, "s3_d5_i4": true, "s3_d5_i5": true, "s4_d0_i2": true, "s4_d0_i3": true, "s4_d0_i4": true, "s4_d0_i5": true, "s4_d1_i1": true, "s4_d1_i2": true, "s4_d1_i3": true, "s4_d1_i4": true, "s4_d3_i2": true, "s4_d3_i3": true, "s4_d3_i4": true, "s4_d4_i3": true, "s4_d4_i4": true, "s4_d4_i5": true, "s4_d5_i2": true, "s5_d0_i2": true, "s5_d0_i3": true, "s5_d0_i4": true, "s5_d0_i5": true, "s5_d2_i2": true, "s5_d2_i3": true, "s5_d3_i2": true, "s5_d3_i3": true, "s5_d3_i4": true, "s5_d3_i5": true, "s5_d4_i3": true, "s5_d4_i4": true, "s5_d4_i5": true, "s5_d5_i2": true, "s5_d5_i3": true, "s5_d5_i4": true, "s5_d5_i5": true, "s6_d0_i2": true, "s6_d0_i3": true, "s6_d0_i4": true, "s6_d1_i1": true, "s6_d1_i2": true, "s6_d1_i3": true, "s7_d0_i2": false, "s7_d0_i3": false, "s7_d0_i4": false, "s7_d0_i5": false, "s7_d2_i2": false, "s7_d2_i3": false, "s7_d3_i2": false, "s7_d3_i3": false, "s7_d3_i4": false, "s7_d3_i5": false, "s7_d4_i3": false, "s7_d4_i4": false, "s7_d4_i5": false, "s7_d4_i6": false, "s7_d5_i2": false, "s7_d5_i3": false, "s7_d5_i4": false, "s7_d5_i5": false, "s8_d0_i2": false, "s8_d0_i3": false, "s8_d0_i4": false, "s8_d0_i5": true, "s8_d1_i1": false, "s8_d1_i2": false, "s8_d1_i3": false, "s8_d1_i4": false, "s8_d3_i2": false, "s8_d3_i3": false, "s8_d3_i4": false, "s8_d4_i3": false, "s8_d4_i4": false, "s8_d4_i5": false, "s8_d5_i2": false, "s8_d5_i3": false, "s8_d5_i4": false, "s9_d0_i2": false, "s9_d0_i3": false, "s9_d0_i4": false, "s9_d0_i5": false, "s9_d2_i2": false, "s9_d2_i3": false, "s9_d3_i2": true, "s9_d3_i3": false, "s9_d3_i4": false, "s9_d3_i5": false, "s9_d4_i3": false, "s9_d4_i4": false, "s9_d4_i5": true, "s9_d5_i2": false, "s9_d5_i3": false, "s10_d0_i2": false, "s10_d0_i3": false, "s10_d0_i4": false, "s10_d0_i5": true, "s10_d1_i1": false, "s10_d1_i2": false, "s10_d1_i3": false, "s10_d1_i4": false, "s10_d3_i2": false, "s10_d3_i3": false, "s10_d3_i4": false, "s10_d4_i3": false, "s10_d4_i4": false, "s10_d4_i5": false, "s10_d5_i2": false, "s11_d0_i2": false, "s11_d0_i3": false, "s11_d0_i4": false, "s11_d0_i5": false, "s11_d2_i2": false, "s11_d2_i3": false, "s11_d3_i2": false, "s11_d3_i3": false, "s11_d3_i4": false, "s11_d3_i5": false, "s11_d4_i3": false, "s11_d4_i4": false, "s11_d4_i5": false, "s11_d5_i2": false, "s11_d5_i3": false, "s12_d0_i2": false, "s12_d0_i3": false, "s12_d0_i4": false, "s12_d1_i1": false, "s12_d1_i2": false, "s12_d1_i3": false, "s12_d1_i4": false, "s12_d3_i2": false, "s12_d3_i3": false, "s12_d3_i4": false, "s12_d4_i3": false, "s12_d4_i4": false, "s12_d4_i5": false, "s13_d0_i2": false, "s13_d0_i3": false, "s13_d0_i4": false, "s13_d0_i5": false, "s13_d2_i2": false, "s13_d2_i3": false, "s13_d3_i2": false, "s13_d3_i3": false, "s13_d3_i4": false, "s13_d3_i5": false, "s13_d4_i3": false, "s13_d4_i4": false, "s13_d4_i5": false, "s14_d0_i2": false, "s14_d0_i3": false, "s14_d0_i4": false, "s14_d0_i5": false, "s14_d1_i1": false, "s14_d1_i2": true, "s14_d1_i3": false, "s14_d1_i4": false, "s14_d3_i2": true, "s14_d3_i3": false, "s14_d3_i4": false, "s14_d4_i3": false, "s14_d4_i4": false, "s14_d4_i5": false, "s14_d5_i2": false, "s15_d0_i2": false, "s15_d0_i3": false, "s15_d0_i4": false, "s15_d0_i5": false, "s15_d2_i2": false, "s15_d2_i3": false, "s15_d3_i2": false, "s15_d3_i3": false, "s15_d3_i4": false, "s15_d3_i5": false, "s15_d4_i3": false, "s15_d4_i4": false, "s15_d4_i5": false, "s15_d5_i2": false, "s15_d5_i3": false, "s16_d0_i2": false, "s16_d0_i3": false, "s16_d0_i4": false, "s16_d1_i1": false, "s16_d1_i2": false, "s16_d1_i3": true, "s16_d3_i2": false, "s16_d3_i3": false, "s16_d4_i3": false, "s16_d5_i2": false, "s17_d0_i2": false, "s17_d0_i3": false, "s17_d2_i2": false, "s17_d2_i3": false, "s17_d3_i2": false, "s17_d3_i3": false, "s17_d3_i4": false, "s17_d3_i5": false, "s17_d4_i3": false, "s17_d4_i4": false, "s17_d4_i5": false, "s17_d5_i2": false, "s17_d5_i3": false, "s18_d0_i2": false, "s18_d0_i3": false, "s18_d0_i4": false, "s18_d0_i5": false, "s18_d1_i1": false, "s18_d1_i2": false, "s18_d1_i3": false, "s18_d1_i4": false, "s18_d3_i2": false, "s18_d3_i3": false, "s18_d3_i4": false, "s18_d4_i3": false, "s18_d4_i4": false, "s18_d4_i5": false, "s18_d5_i2": false, "s19_d0_i2": false, "s19_d0_i3": false, "s19_d0_i4": false, "s19_d0_i5": false, "s19_d2_i2": false, "s19_d2_i3": false, "s19_d3_i2": false, "s19_d3_i3": false, "s19_d3_i4": false, "s19_d3_i5": false, "s19_d4_i3": false, "s19_d4_i4": false, "s19_d4_i5": false, "s19_d5_i2": false, "s19_d5_i3": false, "s20_d0_i2": false, "s20_d0_i3": false, "s20_d0_i4": false, "s20_d1_i1": false, "s20_d1_i2": false, "s20_d1_i3": false, "s20_d1_i4": false, "s20_d3_i2": false, "s20_d3_i3": false, "s20_d3_i4": false, "s21_d0_i2": false, "s21_d0_i3": false, "s21_d0_i4": false, "s21_d0_i5": false, "s21_d2_i2": false, "s21_d2_i3": false, "s21_d3_i2": false, "s21_d3_i3": false, "s21_d3_i4": false, "s21_d3_i5": false, "s21_d4_i3": false, "s21_d5_i2": false, "s22_d0_i2": false, "s22_d0_i3": false, "s22_d0_i4": false, "s22_d0_i5": false, "s22_d1_i1": false, "s22_d1_i2": false, "s22_d1_i3": false, "s22_d1_i4": false, "s22_d3_i2": false, "s22_d3_i3": false, "s22_d3_i4": false, "s22_d4_i3": false, "s22_d4_i4": false, "s22_d4_i5": false, "s22_d5_i2": false, "s23_d0_i2": false, "s23_d0_i3": false, "s23_d0_i4": false, "s23_d0_i5": false, "s23_d2_i2": false, "s23_d2_i3": false, "s23_d3_i2": false, "s23_d3_i3": false, "s23_d3_i4": false, "s23_d3_i5": false, "s23_d4_i3": false, "s23_d4_i4": false, "s23_d4_i5": false, "s1_d3_i1": true, "s1_d4_i6": true}}catch{return {"s1_d0_i0": true, "s1_d0_i1": true, "s1_d0_i2": true, "s1_d0_i3": true, "s1_d0_i4": true, "s1_d0_i5": true, "s1_d1_i0": true, "s1_d2_i0": true, "s1_d2_i1": true, "s1_d2_i2": true, "s1_d2_i3": true, "s1_d3_i0": true, "s1_d4_i0": true, "s1_d4_i1": true, "s1_d4_i2": true, "s1_d4_i3": true, "s1_d4_i4": true, "s1_d4_i5": true, "s1_d5_i0": true, "s1_d6_i0": true, "s2_d0_i0": true, "s2_d0_i1": true, "s2_d0_i2": true, "s2_d0_i3": true, "s2_d0_i4": true, "s2_d0_i5": true, "s2_d1_i0": true, "s2_d1_i1": true, "s2_d1_i2": true, "s2_d1_i3": true, "s2_d2_i0": true, "s2_d2_i1": true, "s2_d2_i2": true, "s2_d2_i3": true, "s2_d2_i4": true, "s2_d3_i0": true, "s2_d3_i1": true, "s2_d3_i2": true, "s2_d3_i3": true, "s2_d3_i4": true, "s2_d4_i0": true, "s2_d4_i1": true, "s2_d5_i0": true, "s2_d5_i1": true, "s2_d5_i2": true, "s2_d5_i3": true, "s2_d5_i4": true}}}
+function saveState(s){localStorage.setItem(KEY,JSON.stringify(s))}
+let state=loadState(),filterMode='all';
+loadCrono(); // restore any previously saved redistribution
+function makeId(s,d,i){return`s${s}_d${d}_i${i}`}
+function prioLabel(p){return{D:'DIAMANTE',A:'VERDE',M:'AMARELA',N:'NÚCLEO'}[p]||''}
+function todayWeek(){const s=new Date(2026,1,23);return Math.min(Math.max(Math.floor((new Date()-s)/(7*86400000))+1,1),27)}
+function getDiaExtra(dia){
+  if(dia.evento){
+    if(dia.plantao)return['plantao festa','🏥 '+dia.evento];
+    const hasSim=dia.items&&dia.items.some(i=>i.tipo==='simulado');
+    return['festa','🎉 '+dia.evento+(hasSim?' · Simulado':'')+(dia.tempo&&!hasSim?' · '+dia.tempo:'')];
+  }
+  if(dia.plantao&&dia.nome==='QUARTA')return['plantao','🏥 Plantão noturno (término)'];
+  if(dia.plantao)return['plantao','🏥 Plantão 24h'];
+  if(dia.restrito&&dia.nome==='QUARTA')return['pos-plantao','😴 Recuperação pós-plantão noturno · só Revisão 5q'];
+  const hasSim=dia.items&&dia.items.some(i=>i.tipo==='simulado');
+  if(hasSim)return['simulado-day','📝 Simulado · 4h'];
+  return['',dia.tempo?'⏱ '+dia.tempo:''];
+}
+function render(){
+  const main=document.getElementById('main');main.innerHTML='';
+  const cwn=todayWeek();
+  CRONOGRAMA.forEach(sem=>{
+    let sT=0,sD=0,aD=0,aT=0;
+    sem.dias.forEach((dia,di)=>{dia.items.forEach((item,ii)=>{sT++;if(state[makeId(sem.num,di,ii)]){sD++;if(item.tipo==='aula')aD++}if(item.tipo==='aula')aT++})}); 
+    const allDone=sT>0&&sD===sT,pct=sT?Math.round(sD/sT*100):0,isCur=sem.num===cwn;
+    if(filterMode==='done'&&!allDone)return;
+    if(filterMode==='pending'&&allDone)return;
+    const el=document.createElement('div');
+    el.className=`semana${allDone?' all-done':''}${isCur?' current-week':''}`;
+    el.id=`sem-${sem.num}`;if(isCur)el.setAttribute('data-current','1');
+    el.innerHTML=`<div class="semana-header" onclick="toggleSem(this)">
+      <div class="sem-left">
+        <div class="sem-badge">${sem.num}</div>
+        <div class="sem-title">
+          <h3>Semana ${sem.num}${isCur?' <span style="color:var(--accent);font-size:11px">← ATUAL</span>':''}</h3>
+          <p>📅 ${sem.start} – ${sem.end} · ⏱ ${sem.tempo}</p>
+        </div>
+      </div>
+      <div class="sem-right">
+        <div class="sem-aulas-done">${aD}/${aT} aulas</div>
+        <div class="sem-progress-wrap">
+          <div class="sem-prog-bar"><div class="sem-prog-fill" style="width:${pct}%"></div></div>
+          <span class="sem-prog-pct">${pct}%</span>
+        </div>
+        <span class="sem-chevron">▾</span>
+      </div>
+    </div>
+    ${sem.aviso?`<div class="sem-aviso">⚠️ ${sem.aviso}</div>`:''}
+    <div class="semana-body">${sem.dias.map((d,di)=>renderDia(sem,di,d)).join('')}</div>`;
+    if(isCur)el.classList.add('open');
+    main.appendChild(el);
+  });
+  updateGlobalStats();
+}
+function renderDia(sem,di,dia){
+  const done=dia.items.filter((_,ii)=>state[makeId(sem.num,di,ii)]).length,tot=dia.items.length,allD=tot>0&&done===tot;
+  const[extra,subtitle]=getDiaExtra(dia);
+  const cls=['dia',extra,allD?'dia-done':''].filter(Boolean).join(' ');
+  return`<div class="${cls}" id="dia-${sem.num}-${di}">
+    <div class="dia-header" onclick="toggleDia(this)">
+      <div class="dia-left"><span class="dia-emoji">${dia.emoji}</span>
+        <div class="dia-info"><h4>${dia.nome} · ${dia.data}</h4><p>${subtitle}</p></div>
+      </div>
+      <div class="dia-right">${tot?`<span class="dia-count">${done}/${tot}</span>`:''}` +
+      `<span class="dia-chevron">▾</span></div>
+    </div>
+    <div class="dia-body">${dia.items.map((item,ii)=>renderItem(sem.num,di,ii,item)).join('')}</div>
+  </div>`
+}
+function renderItem(sn,di,ii,item){
+  if(item.tipo==='treino')return'';
+  const id=makeId(sn,di,ii),done=!!state[id];
+  const isRev=item.tipo==='revisao',isT=false,isSim=item.tipo==='simulado';
+  const cls=`item${isRev?' revisao':isT?' treino':isSim?' simulado':''}${done?' done':''}`;
+  const prio=isRev?'N':isT?'T':(item.prioridade||'');
+  const prioHtml=prio&&!isT&&!isRev&&!isSim?`<span class="prio-tag prio-${prio}">${prioLabel(prio)}</span>`:'';
+  const timeHtml=isRev?`<span class="item-time">${item.qtd}q · ~${item.tempo}min</span>`:
+    isSim?`<span class="item-time">⏱ ~4h</span>`:
+    item.tipo==='aula'&&item.tempo_video?`<span class="item-time">📹 ${item.tempo_video}min · 📝 30min · total ${item.tempo_total}min</span>`:'';
+  const name=isRev?`🔁 Revisão Núcleo — ${item.qtd} questões`:isT?`${item.emoji} ${item.nome}`:isSim?`📝 Simulado`:item.nome;
+  return`<div class="${cls}" onclick="toggleItem('${id}',${sn},${di})" id="item-${id}">
+    <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="item-content"><div class="item-name">${name}</div><div class="item-meta">${prioHtml}${timeHtml}</div></div>
+  </div>`
+}
+function toggleItem(id,sn,di){
+  state[id]=!state[id];saveState(state);
+  const el=document.getElementById(`item-${id}`);if(el)el.classList.toggle('done',state[id]);
+  const sem=CRONOGRAMA[sn-1],dia=sem.dias[di];
+  const done=dia.items.filter((_,ii)=>state[makeId(sn,di,ii)]).length,tot=dia.items.length;
+  const dEl=document.getElementById(`dia-${sn}-${di}`);
+  if(dEl){const c=dEl.querySelector('.dia-count');if(c)c.textContent=`${done}/${tot}`;dEl.classList.toggle('dia-done',tot>0&&done===tot)}
+  updateSemProgress(sn);updateGlobalStats();
+}
+function updateSemProgress(sn){
+  const sem=CRONOGRAMA[sn-1];let tot=0,done=0,aD=0,aT=0;
+  sem.dias.forEach((d,di)=>{d.items.forEach((item,ii)=>{tot++;if(state[makeId(sn,di,ii)]){done++;if(item.tipo==='aula')aD++}if(item.tipo==='aula')aT++})}); 
+  const pct=tot?Math.round(done/tot*100):0,el=document.getElementById(`sem-${sn}`);
+  if(el){const f=el.querySelector('.sem-prog-fill'),p=el.querySelector('.sem-prog-pct'),a=el.querySelector('.sem-aulas-done');
+    if(f)f.style.width=pct+'%';if(p)p.textContent=pct+'%';if(a)a.textContent=`${aD}/${aT} aulas`;
+    el.classList.toggle('all-done',tot>0&&done===tot);}
+}
+function updateGlobalStats(){
+  let dD=0,dA=0,dM=0,dRev=0,dSim=0,gDone=0;
+  CRONOGRAMA.forEach(sem=>{sem.dias.forEach((d,di)=>{d.items.forEach((item,ii)=>{
+    const done=!!state[makeId(sem.num,di,ii)];
+    if(item.tipo==='aula'){if(['D','A','M'].includes(item.prioridade)&&done)gDone++;
+      if(done){if(item.prioridade==='D')dD++;else if(item.prioridade==='A')dA++;else if(item.prioridade==='M')dM++;}}
+    else if(item.tipo==='revisao'&&done)dRev++;
+    else if(item.tipo==='simulado'&&done)dSim++;
+  })})}); 
+  const pct=Math.round(gDone/TOTAL_DAM*100);
+  document.getElementById('gp-done').textContent=gDone;
+  document.getElementById('gp-pct').textContent=pct+'%';
+  document.getElementById('gp-bar').style.width=pct+'%';
+  document.getElementById('cnt-D').textContent=`${dD}/112`;
+  document.getElementById('cnt-A').textContent=`${dA}/171`;
+  document.getElementById('cnt-M').textContent=`${dM}/81`;
+  document.getElementById('cnt-rev').textContent=`${dRev}/206`;
+  document.getElementById('cnt-S').textContent=`${dSim}/36`;
+}
+function toggleSem(h){h.closest('.semana').classList.toggle('open')}
+function toggleDia(h){h.closest('.dia').classList.toggle('open')}
+function setFilter(m,ev){filterMode=m;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));ev.target.classList.add('active');render()}
+function scrollToday(){const el=document.querySelector('[data-current]');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
+
+// ============================================================
+// AUTO-REDISTRIBUIÇÃO DE AULAS ATRASADAS
+// Roda automaticamente toda segunda-feira ou ao clicar no botão
+// ============================================================
+const TIPO_A_WEEKS = [1,3,5,7]; // Semanas 9+ passaram para plantão noturno semanal (Tipo B)
+
+function getDayMax(semNum, diaNome) {
+  return (diaNome === 'QUARTA' && TIPO_A_WEEKS.includes(semNum)) ? 2 : 4;
+}
+function getAulasCount(dia) {
+  return dia.items.filter(i => i.tipo === 'aula').length;
+}
+function canReceive(semNum, dia) {
+  if (dia.plantao || dia.restrito) return false;
+  if (dia.items.some(i => i.tipo === 'simulado')) return false;
+  if (dia.evento && getAulasCount(dia) === 0) return false;
+  return getAulasCount(dia) < getDayMax(semNum, dia.nome);
+}
+
+
+function runAutoRedistr(silent) {
+  const curWeek = todayWeek();
+  const moved = [];
+
+  // Collect pending aulas from past weeks AND remap state keys
+  for (let sn = 1; sn < curWeek; sn++) {
+    const sem = CRONOGRAMA[sn - 1];
+    sem.dias.forEach((dia, di) => {
+      const toKeep = [];
+      const oldIndexMap = []; // maps newIndex → oldIndex for kept items
+
+      dia.items.forEach((item, ii) => {
+        const key = makeId(sem.num, di, ii);
+        if (item.tipo === 'aula' && !state[key]) {
+          // Pending aula → move it out
+          moved.push({
+            item: JSON.parse(JSON.stringify(item)),
+            de: `Sem${sn} ${dia.nome} ${dia.data}`
+          });
+        } else {
+          // Keep this item; track old index → new index mapping
+          oldIndexMap.push(ii);
+          toKeep.push(item);
+        }
+      });
+
+      // Remap state keys for items that shifted position
+      oldIndexMap.forEach((oldIi, newIi) => {
+        if (oldIi !== newIi) {
+          const oldKey = makeId(sem.num, di, oldIi);
+          const newKey = makeId(sem.num, di, newIi);
+          if (state[oldKey] !== undefined) {
+            state[newKey] = state[oldKey];
+            delete state[oldKey];
+          }
+        }
+      });
+
+      dia.items = toKeep;
+    });
+  }
+
+  if (moved.length === 0) {
+      saveState(state);
+      saveCrono();
+    render();
+    return moved;
+  }
+
+  // Place each pending aula in earliest available slot from curWeek onwards
+  for (const p of moved) {
+    let best = null, bestScore = 99999;
+    for (let sn = curWeek; sn <= 23; sn++) {
+      const sem = CRONOGRAMA[sn - 1];
+      sem.dias.forEach((dia) => {
+        if (!canReceive(sn, dia)) return;
+        const cur = getAulasCount(dia);
+        const score = (sn - curWeek) * 8 + cur * 3;
+        if (score < bestScore) { bestScore = score; best = { sn, dia }; }
+      });
+    }
+    if (best) {
+      best.dia.items.push(p.item);
+      p.para = `Sem${best.sn} ${best.dia.nome} ${best.dia.data}`;
+    }
+  }
+
+  saveState(state);
+  saveCrono();
+  render();
+  if (!silent) showToastRedistr(moved);
+  return moved;
+}
+
+function showToastRedistr(moved) {
+  const old = document.getElementById('toast-redistr');
+  if (old) old.remove();
+
+  if (!document.getElementById('toast-anim-style')) {
+    const s = document.createElement('style');
+    s.id = 'toast-anim-style';
+    s.textContent = `
+      @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(24px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+      @keyframes toastOut{from{opacity:1}to{opacity:0}}
+      #toast-redistr{animation:toastIn .3s ease forwards}
+      #toast-redistr.hiding{animation:toastOut .4s ease forwards}
+    `;
+    document.head.appendChild(s);
+  }
+
+  const toast = document.createElement('div');
+  toast.id = 'toast-redistr';
+  toast.style.cssText = [
+    'position:fixed','bottom:76px','left:50%','transform:translateX(-50%)',
+    'background:#1a1a2e','border:1.5px solid #009933',
+    'border-radius:14px','padding:14px 18px','z-index:10000',
+    'max-width:440px','width:92%','box-shadow:0 8px 32px rgba(0,0,0,0.5)'
+  ].join(';');
+
+  toast.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span style="font-size:18px">🔄</span>
+      <strong style="color:#009933;font-size:13px">Auto-redistribuição executada</strong>
+      <button onclick="document.getElementById('toast-redistr').remove()"
+        style="margin-left:auto;background:none;border:none;color:#666;font-size:20px;cursor:pointer;line-height:1;padding:0">×</button>
+    </div>
+    <p style="font-size:11px;color:#888;margin:0 0 8px 0">${moved.length} aula${moved.length>1?'s':''} realocada${moved.length>1?'s':''} de semanas anteriores</p>
+    <div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">
+      ${moved.map(m=>`
+        <div style="font-size:11px;background:rgba(0,153,51,0.12);border-radius:8px;padding:6px 10px;border-left:3px solid #009933">
+          <span style="color:#009933;font-weight:700">[${m.item.prioridade}]</span>
+          <span style="color:#e0e0e0"> ${m.item.nome.length>40?m.item.nome.slice(0,40)+'…':m.item.nome}</span><br>
+          <span style="color:#666;font-size:10px">📤 ${m.de} → 📥 ${m.para||'—'}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  // Auto-dismiss after 9s
+  setTimeout(() => {
+    const t = document.getElementById('toast-redistr');
+    if (t) { t.classList.add('hiding'); setTimeout(()=>t.remove(), 400); }
+  }, 9000);
+}
+
+function addAutoRedistrButton() {
+  if (document.getElementById('btn-redistr')) return;
+  const btn = document.createElement('button');
+  btn.id = 'btn-redistr';
+  btn.innerHTML = '🔄 Redistribuir Atraso';
+  btn.title = 'Realoca automaticamente aulas não vistas de semanas anteriores';
+  btn.style.cssText = [
+    'position:fixed','bottom:16px','left:50%','transform:translateX(-50%)',
+    'background:linear-gradient(135deg,#009933,#007a28)',
+    'color:#fff','border:none','border-radius:24px',
+    'padding:11px 22px','font-size:13px','font-weight:700',
+    'cursor:pointer','z-index:999',
+    'box-shadow:0 4px 20px rgba(124,106,247,0.45)',
+    'display:flex','align-items:center','gap:8px','white-space:nowrap',
+    'transition:transform .15s,box-shadow .15s'
+  ].join(';');
+  btn.onmouseenter = () => { btn.style.transform='translateX(-50%) scale(1.04)'; btn.style.boxShadow='0 6px 28px rgba(124,106,247,0.6)'; };
+  btn.onmouseleave = () => { btn.style.transform='translateX(-50%) scale(1)'; btn.style.boxShadow='0 4px 20px rgba(124,106,247,0.45)'; };
+  btn.onclick = () => {
+    btn.innerHTML = '⏳ Verificando…';
+    btn.disabled = true;
+    setTimeout(() => {
+      const moved = runAutoRedistr(false);
+      if (moved.length === 0) {
+        btn.innerHTML = '✅ Nenhum atraso!';
+        setTimeout(() => { btn.innerHTML = '🔄 Redistribuir Atraso'; btn.disabled=false; }, 2500);
+      } else {
+        btn.innerHTML = `✅ ${moved.length} aula${moved.length>1?'s':''} realocada${moved.length>1?'s':''}`;
+        setTimeout(() => { btn.innerHTML = '🔄 Redistribuir Atraso'; btn.disabled=false; }, 3000);
+      }
+    }, 300);
+  };
+  document.body.appendChild(btn);
+}
+
+// ── INIT ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Add the floating redistribution button
+  addAutoRedistrButton();
+});
+
+// Limpa cache de versões anteriores (chave antiga)
+try{localStorage.removeItem('cronograma_arthur_2026_crono');}catch(e){}
+
+
+// ── Mood Tracker ─────────────────────────────────────────────────────────────
+const MOOD_KEY='arthur_mood_tracker_v1';
+let moodData={},trackerDate=new Date(),currentMood=0,currentEnergy=0,currentSleep=0,currentSyms=new Set();
+function loadMoodData(){try{const d=localStorage.getItem(MOOD_KEY);if(d)moodData=JSON.parse(d);}catch(e){}}
+function saveMoodData(){try{localStorage.setItem(MOOD_KEY,JSON.stringify(moodData));}catch(e){}}
+function dateKey(d){return d.toISOString().slice(0,10);}
+function fmtDate(d){const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return`${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;}
+function openTracker(){loadMoodData();trackerDate=new Date();renderTrackerDate();loadEntryToForm(dateKey(trackerDate));document.getElementById('tracker-overlay').classList.add('open');}
+function closeTracker(){document.getElementById('tracker-overlay').classList.remove('open');}
+function overlayClick(e){if(e.target===document.getElementById('tracker-overlay'))closeTracker();}
+function shiftDay(n){trackerDate=new Date(trackerDate);trackerDate.setDate(trackerDate.getDate()+n);renderTrackerDate();loadEntryToForm(dateKey(trackerDate));}
+function renderTrackerDate(){document.getElementById('tracker-date-label').textContent=fmtDate(trackerDate);}
+function selectMood(n){currentMood=n;document.querySelectorAll('.mood-btn[data-mood]').forEach(b=>b.classList.toggle('selected',+b.dataset.mood===n));}
+function selectSleep(n){currentSleep=n;document.querySelectorAll('.mood-btn[data-sleep]').forEach(b=>b.classList.toggle('selected',+b.dataset.sleep===n));}
+function selectEnergy(n){currentEnergy=n;document.querySelectorAll('.energy-pip').forEach((p,i)=>p.classList.toggle('active',i<n));document.getElementById('energy-val').textContent=n+'/10';}
+function toggleSym(btn){const s=btn.dataset.sym;if(currentSyms.has(s)){currentSyms.delete(s);btn.classList.remove('selected');}else{currentSyms.add(s);btn.classList.add('selected');}}
+function clearForm(){
+  currentMood=0;currentEnergy=0;currentSleep=0;currentSyms=new Set();
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.energy-pip').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sym-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('energy-val').textContent='—';
+  ['tracker-notes','med-nome','med-dose'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('med-tomou').value='';
+  document.getElementById('med-dias').value='';
+}
+function loadEntryToForm(key){
+  clearForm();
+  const e=moodData[key];if(!e)return;
+  if(e.mood)selectMood(e.mood);
+  if(e.energy)selectEnergy(e.energy);
+  if(e.sleep)selectSleep(e.sleep);
+  if(e.syms)e.syms.forEach(s=>{currentSyms.add(s);const b=document.querySelector(`.sym-btn[data-sym="${s}"]`);if(b)b.classList.add('selected');});
+  if(e.notes)document.getElementById('tracker-notes').value=e.notes;
+  if(e.med){
+    document.getElementById('med-nome').value=e.med.nome||'';
+    document.getElementById('med-dose').value=e.med.dose||'';
+    document.getElementById('med-tomou').value=e.med.tomou||'';
+    document.getElementById('med-dias').value=e.med.dias||'';
+  }
+}
+function saveEntry(){
+  const key=dateKey(trackerDate);
+  moodData[key]={mood:currentMood||null,energy:currentEnergy||null,sleep:currentSleep||null,syms:[...currentSyms],notes:document.getElementById('tracker-notes').value.trim(),med:{nome:document.getElementById('med-nome').value.trim(),dose:document.getElementById('med-dose').value.trim(),tomou:document.getElementById('med-tomou').value,dias:document.getElementById('med-dias').value},ts:new Date().toISOString()};
+  saveMoodData();
+  syncMoodUp(key, moodData[key]);
+  const btn=document.querySelector('.tracker-save');
+  btn.textContent='✓ Salvo!';btn.style.background='#007a28';
+  setTimeout(()=>{btn.textContent='💾 Salvar registro';btn.style.background='';},1800);
+}
+function switchTab(tab,btn){
+  ['registro','historico','grafico'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).style.display='';
+  btn.classList.add('active');
+  if(tab==='historico')renderHistorico();
+  if(tab==='grafico')renderGrafico();
+}
+const MOOD_EMOJIS={1:'😔',2:'😕',3:'😐',4:'🙂',5:'😄'};
+const SYM_LABELS={ansiedade:'Ansiedade',irritabilidade:'Irritabilidade',insonia:'Insônia',sonolencia:'Sonolência',focado:'Focado',disperso:'Disperso',cefaleia:'Cefaleia',nausea:'Náusea',apetite_red:'↓ Apetite',apetite_aum:'↑ Apetite',palpitacao:'Palpitação',boca_seca:'Boca seca',motivado:'Motivado',desmotivado:'Desmotivado',choro:'Choro fácil',libido:'↓ Libido'};
+function renderHistorico(){
+  loadMoodData();
+  const keys=Object.keys(moodData).sort().reverse().slice(0,60);
+  const el=document.getElementById('hist-content');
+  if(!keys.length){el.innerHTML='<div class="empty-state">Nenhum registro ainda.<br>Comece registrando hoje! 💊</div>';return;}
+  let streak=0;
+  for(let i=0;;i++){const d=new Date();d.setDate(d.getDate()-i);if(moodData[dateKey(d)])streak++;else break;}
+  el.innerHTML=(streak>1?`<div style="margin-bottom:12px"><span class="streak-chip">🔥 ${streak} dias seguidos</span></div>`:'')
+    +keys.map(key=>{
+      const e=moodData[key],d=new Date(key+'T12:00:00');
+      const dots=Array.from({length:10},(_,i)=>`<div class="hist-energy-dot${e.energy&&i<e.energy?' on':''}"></div>`).join('');
+      const chips=e.syms&&e.syms.length?e.syms.map(s=>`<span class="hist-chip">${SYM_LABELS[s]||s}</span>`).join(''):'';
+      const medInfo=e.med&&e.med.nome?`<span class="hist-chip" style="background:rgba(167,139,250,.2)">💊 ${e.med.nome}${e.med.dose?' '+e.med.dose:''}</span>`:'';
+      return`<div class="hist-day"><div class="hist-date">${fmtDate(d)}</div><div class="hist-mood-big">${e.mood?MOOD_EMOJIS[e.mood]:'—'}</div><div class="hist-body"><div style="display:flex;align-items:center;gap:8px"><div class="hist-energy-dots">${dots}</div>${e.sleep?`<span style="font-size:11px;color:var(--muted)">Sono ${MOOD_EMOJIS[e.sleep]}</span>`:''}</div>${chips||medInfo?`<div class="hist-chips">${chips}${medInfo}</div>`:''} ${e.notes?`<div class="hist-note">"${e.notes}"</div>`:''}</div></div>`;
+    }).join('');
+}
+function renderGrafico(){
+  loadMoodData();
+  const keys=Object.keys(moodData).sort().reverse().slice(0,30);
+  const el=document.getElementById('chart-content');
+  if(!keys.length){el.innerHTML='<div class="empty-state">Sem dados para exibir.</div>';return;}
+  const freq=[0,0,0,0,0];
+  keys.forEach(k=>{const m=moodData[k].mood;if(m)freq[m-1]++;});
+  const maxF=Math.max(...freq,1);
+  const moodRows=[1,2,3,4,5].map(m=>`<div class="chart-row"><div class="chart-label">${MOOD_EMOJIS[m]}</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${Math.round(freq[m-1]/maxF*100)}%"></div></div><div class="chart-count">${freq[m-1]}d</div></div>`).join('');
+  const last14=Array.from({length:14},(_,i)=>{const d=new Date();d.setDate(d.getDate()-13+i);return{key:dateKey(d),d,e:moodData[dateKey(d)]};});
+  const spark=last14.map(({d,e})=>{const h=e&&e.energy?Math.round(e.energy/10*36):0;const col=e&&e.mood?['#e87070','#fb923c','#fbbf24','#4ade80','#009933'][e.mood-1]:'var(--border)';return`<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1"><div style="width:100%;height:${h}px;background:${col};border-radius:3px 3px 0 0;min-height:2px"></div><div style="font-size:8px;color:var(--muted)">${d.getDate()}</div></div>`;}).join('');
+  const medDays=keys.filter(k=>moodData[k].med&&moodData[k].med.tomou==='sim').length;
+  el.innerHTML=`<div class="tracker-section"><label>Humor — frequência (${keys.length} dias)</label>${moodRows}</div><div class="tracker-section"><label>Energia · últimos 14 dias (cor = humor)</label><div style="display:flex;align-items:flex-end;gap:2px;height:44px;padding-top:4px">${spark}</div></div><div class="tracker-section"><label>Adesão à medicação</label><div style="display:flex;align-items:center;gap:12px"><div style="font-size:28px;font-weight:700;color:var(--accent)">${keys.length?Math.round(medDays/keys.length*100):0}%</div><div style="font-size:12px;color:var(--muted)">${medDays} de ${keys.length} dias com medicação tomada</div></div></div>`;
+}
+loadMoodData();
+
+// ── Supabase config ──────────────────────────────────────────────────────────
+const SUPA_URL = 'https://smrmqhcaiakhdznyhmtr.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtcm1xaGNhaWFraGR6bnlobXRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3ODUzMTIsImV4cCI6MjA5NTM2MTMxMn0.Yn3qb5mOUcZ5uNVSZ2jM_XqWS4KJa3EVvZGFvADKswE'; // ← substitua pela sua anon key
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let currentUser = null;
+let syncDebounce = null;
+let isSyncing = false;
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+async function initAuth() {
+  const { data: { session } } = await supa.auth.getSession();
+  if (session) {
+    await onSignedIn(session.user);
+  }
+  supa.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN') await onSignedIn(session.user);
+    if (event === 'SIGNED_OUT') onSignedOut();
+  });
+}
+
+async function onSignedIn(user) {
+  currentUser = user;
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('user-chip').style.display = 'block';
+  document.getElementById('user-email-chip').textContent = user.email.split('@')[0];
+  await syncDown();   // pull latest data from Supabase on login
+  render();
+  updateGlobalStats();
+}
+
+function onSignedOut() {
+  currentUser = null;
+  document.getElementById('auth-overlay').style.display = 'flex';
+  document.getElementById('user-chip').style.display = 'none';
+}
+
+async function doSignIn() {
+  const email = document.getElementById('auth-email').value.trim();
+  const pass  = document.getElementById('auth-pass').value;
+  const btn   = document.getElementById('auth-btn');
+  const msg   = document.getElementById('auth-msg');
+  if (!email || !pass) { msg.textContent = 'Preencha e-mail e senha.'; msg.className = 'auth-msg err'; return; }
+  btn.disabled = true; btn.textContent = 'Entrando…'; msg.textContent = '';
+  const { error } = await supa.auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    // Try sign-up if user doesn't exist (first access)
+    if (error.message.includes('Invalid login')) {
+      const { error: e2 } = await supa.auth.signUp({ email, password: pass });
+      if (e2) { msg.textContent = e2.message; msg.className = 'auth-msg err'; }
+      else { msg.textContent = 'Conta criada! Verifique seu e-mail para confirmar.'; msg.className = 'auth-msg ok'; }
+    } else {
+      msg.textContent = error.message; msg.className = 'auth-msg err';
+    }
+  }
+  btn.disabled = false; btn.textContent = 'Entrar';
+}
+
+async function signOut() {
+  await supa.auth.signOut();
+}
+
+// ── Sync helpers ─────────────────────────────────────────────────────────────
+function showSync(msg) {
+  const el = document.getElementById('sync-status');
+  el.textContent = msg; el.style.display = 'block';
+  clearTimeout(showSync._t);
+  showSync._t = setTimeout(() => el.style.display = 'none', 2500);
+}
+
+async function syncDown() {
+  if (!currentUser) return;
+  try {
+    // 1. Pull aula progress (check state)
+    const { data: progData } = await supa.from('cronograma_progress')
+      .select('state_json, updated_at')
+      .eq('user_id', currentUser.id)
+      .single();
+    if (progData?.state_json) {
+      const remote = JSON.parse(progData.state_json);
+      // Merge: remote wins (it's the canonical cloud state)
+      state = remote;
+      saveState(state);
+    }
+
+    // 2. Pull mood tracker
+    const { data: moodRows } = await supa.from('cronograma_mood')
+      .select('date_key, entry_json')
+      .eq('user_id', currentUser.id);
+    if (moodRows && moodRows.length > 0) {
+      moodData = {};
+      moodRows.forEach(r => { moodData[r.date_key] = JSON.parse(r.entry_json); });
+      saveMoodData();
+    }
+    showSync('☁️ Sincronizado');
+  } catch(e) { console.warn('syncDown error', e); }
+}
+
+async function syncUp() {
+  if (!currentUser || isSyncing) return;
+  isSyncing = true;
+  // Show sync bar animation
+  const bar = document.getElementById('sync-bar');
+  bar.style.display = 'block'; bar.style.transform = 'scaleX(0.7)';
+
+  try {
+    await supa.from('cronograma_progress').upsert({
+      user_id: currentUser.id,
+      state_json: JSON.stringify(state),
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+    bar.style.transform = 'scaleX(1)';
+    setTimeout(() => { bar.style.display = 'none'; bar.style.transform = 'scaleX(0)'; }, 400);
+    showSync('✓ Salvo na nuvem');
+  } catch(e) { console.warn('syncUp error', e); showSync('⚠ Sem conexão'); }
+  isSyncing = false;
+}
+
+async function syncMoodUp(key, entry) {
+  if (!currentUser) return;
+  try {
+    await supa.from('cronograma_mood').upsert({
+      user_id: currentUser.id,
+      date_key: key,
+      entry_json: JSON.stringify(entry),
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id,date_key' });
+    showSync('💊 Humor salvo na nuvem');
+  } catch(e) { console.warn('syncMoodUp error', e); }
+}
+
+// ── Override saveState to also sync up ───────────────────────────────────────
+const _origSaveState = saveState;
+function saveState(s) {
+  _origSaveState(s);
+  clearTimeout(syncDebounce);
+  syncDebounce = setTimeout(() => syncUp(), 1200); // debounce 1.2s
+}
+
+// ── Override saveEntry (mood tracker) to also sync up ────────────────────────
+const _origSaveMoodData = saveMoodData;
+function saveMoodData() {
+  _origSaveMoodData();
+}
+
+initAuth();
+render();
+</script>
+
+<button class="tracker-fab" onclick="openTracker()">💊 Humor</button>
+<div class="tracker-overlay" id="tracker-overlay" onclick="overlayClick(event)">
+  <div class="tracker-modal" id="tracker-modal">
+    <div class="tracker-header">
+      <h2>💊 Tracker Diário</h2>
+      <button class="tracker-close" onclick="closeTracker()">✕ Fechar</button>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('registro',this)">📝 Registrar</button>
+      <button class="tab-btn" onclick="switchTab('historico',this)">📅 Histórico</button>
+      <button class="tab-btn" onclick="switchTab('grafico',this)">📊 Gráfico</button>
+    </div>
+    <div id="tab-registro">
+      <div class="tracker-date-nav" style="margin-top:4px">
+        <button onclick="shiftDay(-1)">‹</button>
+        <span class="tracker-date-label" id="tracker-date-label">—</span>
+        <button onclick="shiftDay(+1)">›</button>
+      </div>
+      <div class="tracker-section" style="margin-top:4px">
+        <label>Como você está?</label>
+        <div class="mood-grid">
+          <button class="mood-btn" data-mood="1" onclick="selectMood(1)"><span class="mood-emoji">😔</span><span class="mood-label">Muito mal</span></button>
+          <button class="mood-btn" data-mood="2" onclick="selectMood(2)"><span class="mood-emoji">😕</span><span class="mood-label">Mal</span></button>
+          <button class="mood-btn" data-mood="3" onclick="selectMood(3)"><span class="mood-emoji">😐</span><span class="mood-label">Neutro</span></button>
+          <button class="mood-btn" data-mood="4" onclick="selectMood(4)"><span class="mood-emoji">🙂</span><span class="mood-label">Bem</span></button>
+          <button class="mood-btn" data-mood="5" onclick="selectMood(5)"><span class="mood-emoji">😄</span><span class="mood-label">Muito bem</span></button>
+        </div>
+      </div>
+      <div class="tracker-section">
+        <label>Energia / Disposição</label>
+        <div class="tracker-energy">
+          <span style="font-size:11px;color:var(--muted);min-width:16px">0</span>
+          <div class="energy-bar" id="energy-bar">
+            <div class="energy-pip" onclick="selectEnergy(1)"></div>
+            <div class="energy-pip" onclick="selectEnergy(2)"></div>
+            <div class="energy-pip" onclick="selectEnergy(3)"></div>
+            <div class="energy-pip" onclick="selectEnergy(4)"></div>
+            <div class="energy-pip" onclick="selectEnergy(5)"></div>
+            <div class="energy-pip" onclick="selectEnergy(6)"></div>
+            <div class="energy-pip" onclick="selectEnergy(7)"></div>
+            <div class="energy-pip" onclick="selectEnergy(8)"></div>
+            <div class="energy-pip" onclick="selectEnergy(9)"></div>
+            <div class="energy-pip" onclick="selectEnergy(10)"></div>
+          </div>
+          <span style="font-size:11px;color:var(--accent);min-width:28px;text-align:right" id="energy-val">—</span>
+        </div>
+      </div>
+      <div class="tracker-section">
+        <label>Sintomas / Efeitos colaterais</label>
+        <div class="symptom-grid">
+          <button class="sym-btn" data-sym="ansiedade" onclick="toggleSym(this)">😰 Ansiedade</button>
+          <button class="sym-btn" data-sym="irritabilidade" onclick="toggleSym(this)">😤 Irritabilidade</button>
+          <button class="sym-btn" data-sym="insonia" onclick="toggleSym(this)">🌙 Insônia</button>
+          <button class="sym-btn" data-sym="sonolencia" onclick="toggleSym(this)">😴 Sonolência</button>
+          <button class="sym-btn" data-sym="focado" onclick="toggleSym(this)">🎯 Focado</button>
+          <button class="sym-btn" data-sym="disperso" onclick="toggleSym(this)">🌀 Disperso</button>
+          <button class="sym-btn" data-sym="cefaleia" onclick="toggleSym(this)">🤕 Cefaleia</button>
+          <button class="sym-btn" data-sym="nausea" onclick="toggleSym(this)">🤢 Náusea</button>
+          <button class="sym-btn" data-sym="apetite_red" onclick="toggleSym(this)">🍽️ ↓ Apetite</button>
+          <button class="sym-btn" data-sym="apetite_aum" onclick="toggleSym(this)">🍔 ↑ Apetite</button>
+          <button class="sym-btn" data-sym="palpitacao" onclick="toggleSym(this)">💓 Palpitação</button>
+          <button class="sym-btn" data-sym="boca_seca" onclick="toggleSym(this)">🫙 Boca seca</button>
+          <button class="sym-btn" data-sym="motivado" onclick="toggleSym(this)">🚀 Motivado</button>
+          <button class="sym-btn" data-sym="desmotivado" onclick="toggleSym(this)">😶 Desmotivado</button>
+          <button class="sym-btn" data-sym="choro" onclick="toggleSym(this)">😢 Choro fácil</button>
+          <button class="sym-btn" data-sym="libido" onclick="toggleSym(this)">❤️ ↓ Libido</button>
+        </div>
+      </div>
+      <div class="tracker-section">
+        <label>Qualidade do sono (noite anterior)</label>
+        <div class="mood-grid">
+          <button class="mood-btn" data-sleep="1" onclick="selectSleep(1)"><span class="mood-emoji">😫</span><span class="mood-label">Péssimo</span></button>
+          <button class="mood-btn" data-sleep="2" onclick="selectSleep(2)"><span class="mood-emoji">😕</span><span class="mood-label">Ruim</span></button>
+          <button class="mood-btn" data-sleep="3" onclick="selectSleep(3)"><span class="mood-emoji">😐</span><span class="mood-label">Regular</span></button>
+          <button class="mood-btn" data-sleep="4" onclick="selectSleep(4)"><span class="mood-emoji">😌</span><span class="mood-label">Bom</span></button>
+          <button class="mood-btn" data-sleep="5" onclick="selectSleep(5)"><span class="mood-emoji">😴</span><span class="mood-label">Ótimo</span></button>
+        </div>
+      </div>
+      <div class="med-section">
+        <div class="med-header">💊 Medicação do dia</div>
+        <div class="med-fields">
+          <div class="med-field"><label>Medicamento</label><input type="text" id="med-nome" placeholder="Ex: Atomoxetina"/></div>
+          <div class="med-field"><label>Dose</label><input type="text" id="med-dose" placeholder="Ex: 40mg"/></div>
+          <div class="med-field"><label>Tomou?</label>
+            <select id="med-tomou"><option value="">—</option><option value="sim">✓ Sim</option><option value="nao">✗ Não</option><option value="parcial">◑ Parcial</option></select>
+          </div>
+          <div class="med-field"><label>Dias em uso</label><input type="number" id="med-dias" placeholder="0" min="0"/></div>
+        </div>
+      </div>
+      <div class="tracker-section">
+        <label>Notas livres</label>
+        <textarea class="tracker-notes" id="tracker-notes" placeholder="Como foi o dia? Algo diferente que notou?"></textarea>
+      </div>
+      <button class="tracker-save" onclick="saveEntry()">💾 Salvar registro</button>
+    </div>
+    <div id="tab-historico" style="display:none"><div id="hist-content" class="tracker-history"></div></div>
+    <div id="tab-grafico" style="display:none"><div class="chart-wrap" id="chart-content"></div></div>
+  </div>
+</div>
+</body>
+</html>
