@@ -297,7 +297,7 @@ function render(){
         <div class="sem-badge">${sem.num}</div>
         <div class="sem-title">
           <h3>Semana ${sem.num}${isCur?' <span style="color:var(--accent);font-size:11px">← ATUAL</span>':''}</h3>
-          <p>📅 ${sem.start} – ${sem.end} · ⏱ ${sem.tempo}</p>
+          <p>📅 ${sem.dias[0]?.data||''} – ${sem.dias[sem.dias.length-1]?.data||''}</p>
         </div>
       </div>
       <div class="sem-right">
